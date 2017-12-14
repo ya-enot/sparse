@@ -151,8 +151,10 @@ public class EBMLHelperTest {
             for (int i = 0; i < Long.SIZE; i++) {
                 value = value.multiply(div).add(BigInteger.ONE);
             }
-            while (value.compareTo(BigInteger.ONE) >= 0) {
-                if (value.compareTo(BigInteger.ONE) == 0) {
+            while (value.compareTo(BigInteger.ONE) >= 0 || value.compareTo(BigInteger.ZERO) == 0) {
+                if (value.compareTo(BigInteger.ZERO) == 0) {
+                    value = BigInteger.valueOf(-1);
+                } else if (value.compareTo(BigInteger.ONE) == 0) {
                     value = BigInteger.ZERO;
                 } else {
                     value = value.divide(div);

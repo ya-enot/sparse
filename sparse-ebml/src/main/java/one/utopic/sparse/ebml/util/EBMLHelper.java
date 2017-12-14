@@ -43,6 +43,10 @@ public final class EBMLHelper {
 
     public static byte[] readUnsignedCode(Input in, boolean strip) throws IOException {
         byte snip = in.readByte();
+        // -1 is a reserved code
+        if (snip == -1) {
+            return new byte[] { snip };
+        }
         int size = 1;
         while (snip == 0) {
             size += 7;
@@ -76,6 +80,11 @@ public final class EBMLHelper {
             out.writeByte(Byte.MIN_VALUE);
             return 1;
         }
+        // -1 is a reserved code
+        if (ba.length == 1 && ba[0] == -1) {
+            out.writeByte((byte) -1);
+            return 1;
+        }
         int overlap = ba.length % 7;
         int head = ba.length / 7 - (overlap > 0 ? 0 : 1);
         for (int i = head; i > 0; i--) {
@@ -87,8 +96,15 @@ public final class EBMLHelper {
             out.writeByte((byte) (((0xff & Byte.MIN_VALUE) >>> overlap)));
             overlap = 0;
         } else {
-            out.writeByte((byte) (ba[0] | ((0xff & Byte.MIN_VALUE) << 1 >>> overlap)));
-            overlap = 1;
+            byte write = (byte) (ba[0] | ((0xff & Byte.MIN_VALUE) << 1 >>> overlap));
+            // -1 is a reserved code
+            if (write == -1) {
+                out.writeByte((byte) (((0xff & Byte.MIN_VALUE) >>> overlap)));
+                overlap = 0;
+            } else {
+                out.writeByte(write);
+                overlap = 1;
+            }
         }
         for (int i = overlap; i < ba.length; i++) {
             out.writeByte(ba[i]);
