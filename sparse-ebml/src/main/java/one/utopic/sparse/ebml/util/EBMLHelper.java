@@ -58,7 +58,7 @@ public final class EBMLHelper {
             snip &= Byte.MAX_VALUE >>> lz;
         }
         byte[] result = new byte[size];
-        if (result.length == 0) {
+        if (result.length < 1) {
             return result;
         }
         result[0] = snip;
@@ -76,7 +76,7 @@ public final class EBMLHelper {
     }
 
     public static int writeUnsignedCode(Output out, byte[] ba) throws IOException {
-        if (ba.length == 0) {
+        if (ba.length < 1) {
             out.writeByte(Byte.MIN_VALUE);
             return 1;
         }
@@ -124,7 +124,18 @@ public final class EBMLHelper {
     }
 
     public static boolean isCodeValid(byte[] ba) {
-        return false;
+        if (ba.length < 1) {
+            return false;
+        }
+        int i = 0;
+        byte snip = ba[i++];
+        int size = 1;
+        while (snip == 0 && i < ba.length) {
+            size += 7 + 1; // Data 7 and 1 header byte
+            snip = ba[i++];
+        }
+        size += getNumberOfLeadingZeros(snip);
+        return size == ba.length;
     }
 
     private EBMLHelper() {
@@ -132,7 +143,7 @@ public final class EBMLHelper {
 
     // Acts like a BigInteger, except that zero length byte array results in 0
     public static long bytesToLong(byte[] ba) throws IOException {
-        if (ba.length == 0) {
+        if (ba.length < 1) {
             return 0;
         }
         return new BigInteger(ba).longValue();

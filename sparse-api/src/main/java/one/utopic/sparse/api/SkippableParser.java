@@ -18,8 +18,10 @@
  */
 package one.utopic.sparse.api;
 
-public interface Skippable {
+import java.io.IOException;
 
-    void skip();
+public interface SkippableParser {
+
+    void skip() throws IOException;
 
 }

@@ -18,16 +18,68 @@
  */
 package one.utopic.sparse.ebml;
 
-import static one.utopic.sparse.ebml.util.EBMLHelper.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EBMLType {
 
-    public final byte[] code;
+    private final EBMLCode EBMLCode;
+    private final String name;
 
-    public EBMLType(byte[] tagCode) {
-        if (!isCodeValid(tagCode)) {
-            throw new IllegalArgumentException("EBMLType tagCode should be a valid EBML code");
+    private EBMLType(String name, EBMLCode EBMLCode) {
+        this.name = name;
+        this.EBMLCode = EBMLCode;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public EBMLCode getEBMLCode() {
+        return EBMLCode;
+    }
+
+    public static class Context {
+
+        private final Map<EBMLCode, EBMLType> typeMap = new ConcurrentHashMap<EBMLCode, EBMLType>();
+
+        public synchronized EBMLType newType(String name, EBMLCode code) {
+            if (typeMap.containsKey(code)) {
+                throw new IllegalArgumentException("Type is already registered for " + code);
+            }
+            code = code.intern();
+            EBMLType type = new EBMLType(name, code);
+            typeMap.put(code, type);
+            return type;
         }
-        this.code = tagCode;
+
+        public EBMLType getType(EBMLCode code) {
+            return typeMap.get(code);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((getEBMLCode() == null) ? 0 : getEBMLCode().hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        EBMLType other = (EBMLType) obj;
+        if (getEBMLCode() == null) {
+            if (other.getEBMLCode() != null)
+                return false;
+        } else if (!getEBMLCode().equals(other.getEBMLCode()))
+            return false;
+        return true;
     }
 }

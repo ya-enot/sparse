@@ -22,12 +22,21 @@ import java.util.Objects;
 
 public class EBMLHeader {
 
-    public final EBMLType type;
-    public final long length;
+    private final EBMLType type;
+    private final long length;
 
     public EBMLHeader(EBMLType type, long length) {
         Objects.requireNonNull(type);
         this.type = type;
         this.length = length;
     }
+
+    public EBMLType getType() {
+        return type;
+    }
+
+    public long getLength() {
+        return length;
+    }
+
 }

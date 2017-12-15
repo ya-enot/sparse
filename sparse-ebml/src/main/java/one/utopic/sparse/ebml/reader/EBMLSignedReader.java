@@ -26,7 +26,7 @@ public class EBMLSignedReader implements Reader<EBMLParser, Integer> {
 
     public Integer read(EBMLParser parser) {
 	EBMLHeader header = parser.getHeader();
-	rawValue = parser.readData(size)
+	rawValue = parser.readData(header.getLength());
 	long l = 0;
 	long tmp = 0;
 	l |= ((long) rawValue[0] << (56 - ((8 - rawValue.length) * 8)));
