@@ -16,27 +16,40 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.ebml;
+package one.utopic.sparse.ebml.util;
 
+import java.io.IOException;
 import java.util.Objects;
 
-public class EBMLHeader {
+import one.utopic.abio.api.output.Output;
 
-    private final EBMLType type;
+public class ByteArrayOutput implements Output {
+
+    private final byte[] out;
     private final int length;
+    private int pos;
 
-    public EBMLHeader(EBMLType type, int length) {
-        Objects.requireNonNull(type);
-        this.type = type;
-        this.length = length;
+    public ByteArrayOutput(byte[] buff) {
+        this(buff, 0, buff.length);
     }
 
-    public EBMLType getType() {
-        return type;
+    public ByteArrayOutput(byte[] buff, int start) {
+        this(buff, start, buff.length - start);
     }
 
-    public int getLength() {
-        return length;
+    public ByteArrayOutput(byte[] buff, int offset, int length) {
+        Objects.requireNonNull(buff);
+        this.out = buff;
+        this.length = offset + length;
+        this.pos = offset;
+    }
+
+    public boolean isFinished() {
+        return pos >= length;
+    }
+
+    public void writeByte(byte b) throws IOException {
+        out[pos++] = b;
     }
 
 }

@@ -157,6 +157,22 @@ public final class EBMLHelper {
         return BigInteger.valueOf(value).toByteArray();
     }
 
+    // Acts like a BigInteger, except that zero length byte array results in 0
+    public static int bytesToInt(byte[] ba) throws IOException {
+        if (ba.length < 1) {
+            return 0;
+        }
+        return new BigInteger(ba).intValue();
+    }
+
+    // Acts like a BigInteger, except that 0 results in zero length byte array
+    public static byte[] intToBytes(int value) throws IOException {
+        if (value == 0) {
+            return EMPTY;
+        }
+        return BigInteger.valueOf(value).toByteArray();
+    }
+
     public static int getNumberOfLeadingZeros(byte b) {
         return getNumberOfLeadingZeros(b, Byte.SIZE);
     }

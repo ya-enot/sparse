@@ -18,24 +18,36 @@
  */
 package one.utopic.sparse.ebml.reader;
 
+import java.io.IOException;
+
 import one.utopic.sparse.api.Reader;
 import one.utopic.sparse.ebml.EBMLHeader;
 import one.utopic.sparse.ebml.EBMLParser;
+import one.utopic.sparse.ebml.util.ByteArrayOutput;
 
-public class EBMLSignedReader implements Reader<EBMLParser, Integer> {
+public class EBMLSignedReader implements Reader<EBMLParser, Long> {
 
-    public Integer read(EBMLParser parser) {
-	EBMLHeader header = parser.getHeader();
-	rawValue = parser.readData(header.getLength());
-	long l = 0;
-	long tmp = 0;
-	l |= ((long) rawValue[0] << (56 - ((8 - rawValue.length) * 8)));
-	for (int i = 1; i < rawValue.length; i++) {
-		tmp = ((long) rawValue[rawValue.length - i]) << 56;
-		tmp >>>= 56 - (8 * (i - 1));
-		l |= tmp;
-	}
-	return l;
+    public Long read(EBMLParser parser) throws IOException {
+        EBMLHeader header = parser.getHeader();
+        if (header != null) {
+            byte[] rawValue = new byte[header.getLength()];
+            parser.read(new ByteArrayOutput(rawValue));
+            if (rawValue.length == 0) {
+                parser.next();
+                return 0L;
+            }
+            long l = 0;
+            long tmp = 0;
+            l |= ((long) rawValue[0] << (56 - ((8 - rawValue.length) * 8)));
+            for (int i = 1; i < rawValue.length; i++) {
+                tmp = ((long) rawValue[rawValue.length - i]) << 56;
+                tmp >>>= 56 - (8 * (i - 1));
+                l |= tmp;
+            }
+            parser.next();
+            return l;
+        }
+        return null;
     }
 
 }

@@ -16,27 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.ebml;
+package one.utopic.sparse.api.exception;
 
-import java.util.Objects;
+import java.io.IOException;
 
-public class EBMLHeader {
+public class ParserIOException extends IOException {
 
-    private final EBMLType type;
-    private final int length;
+    private static final long serialVersionUID = -5931224445518929062L;
 
-    public EBMLHeader(EBMLType type, int length) {
-        Objects.requireNonNull(type);
-        this.type = type;
-        this.length = length;
+    public ParserIOException() {
+        super();
     }
 
-    public EBMLType getType() {
-        return type;
+    public ParserIOException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public int getLength() {
-        return length;
+    public ParserIOException(String message) {
+        super(message);
+    }
+
+    public ParserIOException(Throwable cause) {
+        super(cause);
     }
 
 }

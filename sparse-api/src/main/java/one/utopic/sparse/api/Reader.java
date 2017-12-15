@@ -18,8 +18,10 @@
  */
 package one.utopic.sparse.api;
 
+import java.io.IOException;
+
 public interface Reader<P extends Parser<P>, O> {
 
-    O read(P parser);
+    O read(P parser) throws IOException;
 
 }
