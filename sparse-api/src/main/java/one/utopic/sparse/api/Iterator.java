@@ -18,6 +18,12 @@
  */
 package one.utopic.sparse.api;
 
-public interface Parser extends Iterator {
+import java.io.IOException;
+
+public interface Iterator {
+
+    boolean hasNext() throws IOException;
+
+    void next() throws IOException;
 
 }

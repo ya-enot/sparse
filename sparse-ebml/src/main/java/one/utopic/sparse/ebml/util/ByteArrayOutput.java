@@ -25,7 +25,7 @@ import one.utopic.abio.api.output.Output;
 
 public class ByteArrayOutput implements Output {
 
-    private final byte[] out;
+    private final byte[] buff;
     private final int length;
     private int pos;
 
@@ -39,7 +39,7 @@ public class ByteArrayOutput implements Output {
 
     public ByteArrayOutput(byte[] buff, int offset, int length) {
         Objects.requireNonNull(buff);
-        this.out = buff;
+        this.buff = buff;
         this.length = offset + length;
         this.pos = offset;
     }
@@ -49,7 +49,7 @@ public class ByteArrayOutput implements Output {
     }
 
     public void writeByte(byte b) throws IOException {
-        out[pos++] = b;
+        buff[pos++] = b;
     }
 
 }

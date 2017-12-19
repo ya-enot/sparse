@@ -16,8 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml;
 
-public interface Parser extends Iterator {
+import java.io.IOException;
 
+import one.utopic.sparse.api.Formatter;
+import one.utopic.sparse.api.Writer;
+
+public interface EBMLWriter<F extends Formatter, T> extends Writer<F, T> {
+
+    Part<F> prepare(T o) throws IOException;
+
+    interface Part<F extends Formatter> extends Writer.Part<F> {
+
+        void write(F formatter) throws IOException;
+
+        int getSize(F formatter) throws IOException;
+
+    }
 }

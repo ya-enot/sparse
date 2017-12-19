@@ -23,20 +23,14 @@ import java.util.Objects;
 public class EBMLHeader {
 
     private final EBMLType type;
-    private final int length;
 
-    public EBMLHeader(EBMLType type, int length) {
+    public EBMLHeader(EBMLType type) {
         Objects.requireNonNull(type);
         this.type = type;
-        this.length = length;
     }
 
     public EBMLType getType() {
         return type;
-    }
-
-    public int getLength() {
-        return length;
     }
 
 }

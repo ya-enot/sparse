@@ -16,8 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.reader;
 
-public interface Parser extends Iterator {
+import java.io.IOException;
 
+import one.utopic.sparse.api.Reader;
+import one.utopic.sparse.ebml.EBMLParser;
+import one.utopic.sparse.ebml.util.ByteArrayOutput;
+
+public class EBMLByteReader implements Reader<EBMLParser, byte[]> {
+
+    public byte[] read(EBMLParser parser) throws IOException {
+        if (parser.hasNext()) {
+            byte[] buff = new byte[parser.getRemain()];
+            ByteArrayOutput out = new ByteArrayOutput(buff);
+            parser.read(out);
+            parser.next();
+            return buff;
+        }
+        return null;
+    }
 }

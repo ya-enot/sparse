@@ -27,18 +27,15 @@ import one.utopic.abio.api.output.Output;
 
 public final class EBMLHelper {
 
-    private static final byte[] EMPTY = new byte[] {};
+    public static final long UNIX_EPOCH_DELAY = 978307200; // 2001/01/01 00:00:00 UTC
+    public static final byte[] EMPTY = new byte[0];
 
     public static byte[] readTag(Input in) throws IOException {
         return readUnsignedCode(in, false);
     }
 
-    public static long readLength(Input in) throws IOException {
-        return bytesToLong(readUnsignedCode(in, true));
-    }
-
-    public static byte[] readUnsignedCode(Input in) throws IOException {
-        return readUnsignedCode(in, true);
+    public static int readLength(Input in) throws IOException {
+        return bytesToInt(readUnsignedCode(in, true));
     }
 
     public static byte[] readUnsignedCode(Input in, boolean strip) throws IOException {
@@ -112,15 +109,24 @@ public final class EBMLHelper {
         return head + ba.length + (1 - overlap);
     }
 
-    public static int writeUnsignedCheck(Output out, byte[] ba) throws IOException {
-        if (!isCodeValid(ba)) {
-            return 0;
+    public static int getCodeLength(byte[] ba) {
+        if (ba.length == 0) {
+            return 1;
         }
-        int i = 0;
-        for (; i < ba.length; i++) {
-            out.writeByte(ba[i]);
+        if (ba.length == 1 && ba[0] == -1) {
+            return 1;
         }
-        return i;
+        int overlap = ba.length % 7;
+        if (getNumberOfLeadingZeros(ba[0]) < overlap) {
+            overlap = 0;
+        } else if (overlap != 0) {
+            if (ba[0] == Byte.MAX_VALUE) {
+                overlap = 0;
+            } else {
+                overlap = 1;
+            }
+        }
+        return ba.length + ba.length / 7 + (ba.length % 7 > 0 ? 1 : 0) - overlap;
     }
 
     public static boolean isCodeValid(byte[] ba) {

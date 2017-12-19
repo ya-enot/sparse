@@ -16,8 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.writer;
 
-public interface Parser extends Iterator {
+import java.io.IOException;
+import java.util.Date;
+
+import one.utopic.sparse.ebml.EBMLFormatter;
+import one.utopic.sparse.ebml.EBMLWriter;
+
+import static one.utopic.sparse.ebml.util.EBMLHelper.*;
+
+public class EBMLDateWriter implements EBMLWriter<EBMLFormatter, Date> {
+
+    private final EBMLWriter<EBMLFormatter, Long> longWriter;
+
+    public EBMLDateWriter(EBMLWriter<EBMLFormatter, Long> longWriter) {
+        this.longWriter = longWriter;
+    }
+
+    public Part<EBMLFormatter> prepare(final Date o) throws IOException {
+        return o == null ? null : longWriter.prepare((o.getTime() - UNIX_EPOCH_DELAY) * 1000000000);
+    }
 
 }

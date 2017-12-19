@@ -16,8 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.util;
 
-public interface Parser extends Iterator {
+import java.io.IOException;
+import java.util.Objects;
+
+import one.utopic.abio.api.input.Input;
+
+public class ByteArrayInput implements Input {
+
+    private final byte[] buff;
+    private final int length;
+    private int pos;
+
+    public ByteArrayInput(byte[] buff) {
+        this(buff, 0, buff.length);
+    }
+
+    public ByteArrayInput(byte[] buff, int offset, int length) {
+        Objects.requireNonNull(buff);
+        this.buff = buff;
+        this.length = offset + length;
+        this.pos = offset;
+    }
+
+    public boolean isFinished() {
+        return pos >= length;
+    }
+
+    public byte readByte() throws IOException {
+        return buff[pos++];
+    }
 
 }

@@ -18,6 +18,6 @@
  */
 package one.utopic.sparse.api;
 
-public interface Parser extends Iterator {
+public interface Formatter extends Iterator {
 
 }

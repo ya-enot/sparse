@@ -16,12 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.writer;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
-public interface Reader<P extends Parser, O> {
+import one.utopic.sparse.ebml.EBMLFormatter;
+import one.utopic.sparse.ebml.EBMLWriter;
 
-    O read(P parser) throws IOException;
+public class EBMLStringWriter implements EBMLWriter<EBMLFormatter, String> {
+
+    private final Charset cs;
+    private final EBMLByteWriter byteWriter;
+
+    public EBMLStringWriter(EBMLByteWriter byteWriter) {
+        this(Charset.defaultCharset(), byteWriter);
+    }
+
+    public EBMLStringWriter(Charset cs, EBMLByteWriter byteWriter) {
+        this.byteWriter = byteWriter;
+        this.cs = cs;
+    }
+
+    public Part<EBMLFormatter> prepare(final String o) throws IOException {
+        return o == null ? null : byteWriter.prepare(o.getBytes(cs));
+    }
 
 }

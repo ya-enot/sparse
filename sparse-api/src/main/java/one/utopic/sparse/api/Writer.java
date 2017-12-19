@@ -18,6 +18,16 @@
  */
 package one.utopic.sparse.api;
 
-public interface Parser extends Iterator {
+import java.io.IOException;
+
+public interface Writer<F extends Formatter, T> {
+
+    Part<F> prepare(T o) throws IOException;
+
+    interface Part<F extends Formatter> {
+
+        void write(F formatter) throws IOException;
+
+    }
 
 }

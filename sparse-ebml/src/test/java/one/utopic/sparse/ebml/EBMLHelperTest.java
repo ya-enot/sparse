@@ -164,6 +164,7 @@ public class EBMLHelperTest {
                 if (isVerbose()) {
                     System.out.println(byteToBinaryString(out.getBytes())); // TODO LOG
                 }
+                assertEquals(w, getCodeLength(value.toByteArray()));
                 assertEquals(out.getBytes().length, w);
                 assertTrue(isCodeValid(out.getBytes()));
                 byte[] bytes = readUnsignedCode(new ByteArrayInput(out.getBytes()), true);

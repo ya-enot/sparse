@@ -20,8 +20,11 @@ package one.utopic.sparse.ebml;
 
 import static one.utopic.sparse.ebml.util.EBMLHelper.isCodeValid;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+
+import one.utopic.abio.api.output.Output;
 
 public final class EBMLCode {
 
@@ -56,6 +59,16 @@ public final class EBMLCode {
             throw new IllegalArgumentException("Code is not a valid EBML coded data");
         }
         this.code = code;
+    }
+
+    int getSize() {
+        return code.length;
+    }
+
+    void write(Output out) throws IOException {
+        for (int i = 0; i < code.length; i++) {
+            out.writeByte(code[i]);
+        }
     }
 
     public EBMLCode intern() {

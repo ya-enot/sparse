@@ -18,13 +18,13 @@
  */
 package one.utopic.sparse.api;
 
-public interface AnchorParser<P extends AnchorParser<P>> extends Parser<P> {
+public interface AnchorParser<T, P extends AnchorParser<T, P>> extends Parser {
 
-    <O> AnchorSelector<P, O> anchor(Reader<P, ?>... path);
+    <O> AnchorSelector<T, O> select(Reader<P, O> reader);
 
-    interface AnchorSelector<P extends AnchorParser<P>, O> {
+    interface AnchorSelector<T, O> {
 
-        Anchor<O> get(Reader<P, O> reader);
+        Anchor<O> at(T... path);
 
     }
 
