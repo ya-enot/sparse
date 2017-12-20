@@ -45,22 +45,19 @@ public class EBMLListReader<T> implements Reader<EBMLParser, List<T>> {
     }
 
     public List<T> read(EBMLParser parser) throws IOException {
-        if (parser.hasNext()) {
-            List<T> list = newList();
-            EBMLHeader elementHeader = null;
-            while ((elementHeader = parser.readHeader()) != null) {
-                if (elementHeader.getType().equals(elementType)) {
-                    list.add(elementReader.read(parser));
-                } else if (strict) {
-                    throw new IOException("Strict list reader element type missmatch");
-                } else {
-                    parser.skip();
-                }
+        List<T> list = newList();
+        EBMLHeader elementHeader = null;
+        while ((elementHeader = parser.readHeader()) != null) {
+            if (elementHeader.getType().equals(elementType)) {
+                list.add(elementReader.read(parser));
+                parser.next();
+            } else if (strict) {
+                throw new IOException("Strict list reader element type missmatch");
+            } else {
+                parser.skip();
             }
-            parser.next();
-            return list;
         }
-        return null;
+        return list;
     }
 
     protected List<T> newList() {

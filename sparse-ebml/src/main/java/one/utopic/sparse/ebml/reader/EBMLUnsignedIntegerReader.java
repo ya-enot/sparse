@@ -27,13 +27,9 @@ import one.utopic.sparse.ebml.EBMLParser;
 public class EBMLUnsignedIntegerReader implements Reader<EBMLParser, Integer> {
 
     public Integer read(EBMLParser parser) throws IOException {
-        if (parser.hasNext()) {
-            IntegerOutput out = new IntegerOutput();
-            parser.read(out);
-            parser.next();
-            return out.finish().result;
-        }
-        return null;
+        IntegerOutput out = new IntegerOutput();
+        parser.read(out);
+        return out.finish().result;
     }
 
     private static class IntegerOutput implements Output {

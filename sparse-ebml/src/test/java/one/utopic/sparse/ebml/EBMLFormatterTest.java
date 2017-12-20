@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import one.utopic.sparse.api.Reader;
 import one.utopic.sparse.ebml.EBMLType.Context;
+import one.utopic.sparse.ebml.EBMLWriter.Part;
 import one.utopic.sparse.ebml.TestHelper.ByteArrayInput;
 import one.utopic.sparse.ebml.reader.EBMLListReader;
 import one.utopic.sparse.ebml.reader.EBMLSignedLongReader;
@@ -45,7 +46,7 @@ public class EBMLFormatterTest {
 
     private final EBMLType TEST_TYPE = ctx.newType("Test", new EBMLCode(TEST));
 
-    private final EBMLWriter<EBMLFormatter, Long> LONG_WRITER = new EBMLSignedLongWriter(TEST_TYPE);
+    private final EBMLWriter<EBMLFormatter, Long> LONG_WRITER = new EBMLSignedLongWriter();
 
     private final EBMLWriter<EBMLFormatter, Collection<Long>> COLLECTION_LONG_WRITER = new EBMLCollectionWriter<Long>(
             TEST_TYPE, LONG_WRITER);
@@ -63,21 +64,21 @@ public class EBMLFormatterTest {
                 values.add((long) i);
             }
         }
-        ByteArrayOutput bao = new ByteArrayOutput();
-        EBMLFormatter formatter = new EBMLFormatter(bao);
-        COLLECTION_LONG_WRITER.prepare(values).write(formatter);
-        ByteArrayInput in = new ByteArrayInput(bao.getBytes());
+        ByteArrayOutput out = new ByteArrayOutput();
+        EBMLFormatter formatter = new EBMLFormatter(out);
+        Part<EBMLFormatter> part = COLLECTION_LONG_WRITER.prepare(values);
+        formatter.newHeader(TEST_TYPE, part.getSize(formatter));
+        part.write(formatter);
+        ByteArrayInput in = new ByteArrayInput(out.getBytes());
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            while (parser.hasNext()) {
-                List<Long> value = READER_LIST_SIGNED_LONG.read(parser);
-                for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
-                    assertEquals(i, value.get(c).longValue());
-                }
-                value = READER_LIST_SIGNED_LONG.read(parser);
-                assertNull(value);
-                parser = new EBMLParser(in, ctx);
+            assertTrue(parser.hasNext());
+            List<Long> value = READER_LIST_SIGNED_LONG.read(parser);
+            parser.next();
+            for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
+                assertEquals(i, value.get(c).longValue());
             }
+            assertFalse(parser.hasNext());
         }
     }
 

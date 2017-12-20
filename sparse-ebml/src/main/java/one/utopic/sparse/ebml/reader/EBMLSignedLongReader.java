@@ -27,13 +27,9 @@ import one.utopic.sparse.ebml.EBMLParser;
 public class EBMLSignedLongReader implements Reader<EBMLParser, Long> {
 
     public Long read(EBMLParser parser) throws IOException {
-        if (parser.hasNext()) {
-            LongOutput out = new LongOutput();
-            parser.read(out);
-            parser.next();
-            return out.finish().result;
-        }
-        return null;
+        LongOutput out = new LongOutput();
+        parser.read(out);
+        return out.finish().result;
     }
 
     private static class LongOutput implements Output {

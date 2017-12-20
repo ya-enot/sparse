@@ -35,11 +35,7 @@ public class EBMLDateReader implements Reader<EBMLParser, Date> {
     }
 
     public Date read(EBMLParser parser) throws IOException {
-        Long millis = longReader.read(parser);
-        if (millis != null) {
-            return new Date(millis / 1000000000 + UNIX_EPOCH_DELAY);
-        }
-        return null;
+        return new Date(longReader.read(parser) / 1000000000 + UNIX_EPOCH_DELAY);
     }
 
 }

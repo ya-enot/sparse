@@ -41,8 +41,8 @@ public class EBMLMappedReader<T> implements Reader<EBMLParser, T> {
     }
 
     public T read(EBMLParser parser) throws IOException {
-        EBMLHeader header = parser.getHeader();
-        if (header != null) {
+        if (parser.hasNext()) {
+            EBMLHeader header = parser.getHeader();
             Reader<EBMLParser, ? extends T> reader = readerMap.get(header.getType());
             if (reader != null) {
                 return reader.read(parser);

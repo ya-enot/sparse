@@ -29,11 +29,11 @@ import one.utopic.sparse.ebml.EBMLWriter;
 
 public class EBMLCollectionWriter<T> implements EBMLWriter<EBMLFormatter, Collection<T>> {
 
-    private final EBMLType type;
+    private final EBMLType elementType;
     private final EBMLWriter<EBMLFormatter, T> elementWriter;
 
-    public EBMLCollectionWriter(EBMLType type, EBMLWriter<EBMLFormatter, T> elementWriter) {
-        this.type = type;
+    public EBMLCollectionWriter(EBMLType elementType, EBMLWriter<EBMLFormatter, T> elementWriter) {
+        this.elementType = elementType;
         this.elementWriter = elementWriter;
     }
 
@@ -41,34 +41,30 @@ public class EBMLCollectionWriter<T> implements EBMLWriter<EBMLFormatter, Collec
         return o == null ? null : new Part<EBMLFormatter>() {
 
             private final Collection<Part<EBMLFormatter>> parts = prepareCollection(o);
-            private int dataSize = -1;
+            private int size = -1;
 
             public int getSize(EBMLFormatter formatter) throws IOException {
-                int size = getDataSize(formatter);
-                return formatter.getHeaderSize(type, size) + size;
-            }
-
-            private int getDataSize(EBMLFormatter formatter) throws IOException {
-                if (dataSize != -1) {
-                    return dataSize;
+                if (size != -1) {
+                    return size;
                 }
                 int size = 0;
                 Iterator<Part<EBMLFormatter>> it = parts.iterator();
                 while (it.hasNext()) {
-                    size += it.next().getSize(formatter);
+                    Part<EBMLFormatter> part = it.next();
+                    size += formatter.getPartSize(elementType, part.getSize(formatter));
 
                 }
-                return dataSize = size;
+                return this.size = size;
             }
 
             public void write(EBMLFormatter formatter) throws IOException {
-                int size = getDataSize(formatter);
-                formatter.newHeader(type, size);
                 Iterator<Part<EBMLFormatter>> it = parts.iterator();
                 while (it.hasNext()) {
-                    it.next().write(formatter);
+                    Part<EBMLFormatter> part = it.next();
+                    formatter.newHeader(elementType, part.getSize(formatter));
+                    part.write(formatter);
+                    formatter.next();
                 }
-                formatter.next();
             }
         };
     }

@@ -27,13 +27,9 @@ import one.utopic.sparse.ebml.util.ByteArrayOutput;
 public class EBMLByteReader implements Reader<EBMLParser, byte[]> {
 
     public byte[] read(EBMLParser parser) throws IOException {
-        if (parser.hasNext()) {
-            byte[] buff = new byte[parser.getRemain()];
-            ByteArrayOutput out = new ByteArrayOutput(buff);
-            parser.read(out);
-            parser.next();
-            return buff;
-        }
-        return null;
+        byte[] buff = new byte[parser.getRemain()];
+        ByteArrayOutput out = new ByteArrayOutput(buff);
+        parser.read(out);
+        return buff;
     }
 }

@@ -21,7 +21,6 @@ package one.utopic.sparse.ebml.writer;
 import java.io.IOException;
 
 import one.utopic.sparse.ebml.EBMLFormatter;
-import one.utopic.sparse.ebml.EBMLType;
 import one.utopic.sparse.ebml.EBMLWriter;
 import one.utopic.sparse.ebml.util.ByteArrayInput;
 
@@ -29,25 +28,17 @@ import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
 public class EBMLSignedIntegerWriter implements EBMLWriter<EBMLFormatter, Integer> {
 
-    private final EBMLType type;
-
-    public EBMLSignedIntegerWriter(EBMLType type) {
-        this.type = type;
-    }
-
     public Part<EBMLFormatter> prepare(final Integer o) throws IOException {
         return o == null ? null : new Part<EBMLFormatter>() {
 
             private final byte[] data = intToBytes(o);
 
             public void write(EBMLFormatter formatter) throws IOException {
-                formatter.newHeader(type, data.length);
                 formatter.write(new ByteArrayInput(data));
-                formatter.next();
             }
 
             public int getSize(EBMLFormatter formatter) throws IOException {
-                return formatter.getHeaderSize(type, data.length) + data.length;
+                return data.length;
             }
 
         };

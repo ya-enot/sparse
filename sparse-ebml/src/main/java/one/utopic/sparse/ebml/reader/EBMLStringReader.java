@@ -39,7 +39,6 @@ public class EBMLStringReader implements Reader<EBMLParser, String> {
     }
 
     public String read(EBMLParser parser) throws IOException {
-        byte[] bytes = byteReader.read(parser);
-        return bytes == null ? null : new String(bytes, cs);
+        return new String(byteReader.read(parser), cs);
     }
 }

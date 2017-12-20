@@ -80,17 +80,15 @@ public class EBMLParserTest {
         ByteArrayInput in = new ByteArrayInput(out.getBytes());
         for (int i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++) {
             EBMLParser parser = new EBMLParser(in, ctx);
+            assertTrue(parser.hasNext());
             Long value = READER_SIGNED_LONG.read(parser);
+            parser.next();
             assertEquals(i, value.intValue());
-            value = READER_SIGNED_LONG.read(parser);
-            assertNull(value);
+            assertFalse(parser.hasNext());
         }
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            Long value = READER_SIGNED_LONG.read(parser);
-            assertNull(value);
-            value = READER_SIGNED_LONG.read(parser);
-            assertNull(value);
+            assertFalse(parser.hasNext());
         }
     }
 
@@ -106,11 +104,12 @@ public class EBMLParserTest {
             int i = Short.MIN_VALUE;
             while (parser.hasNext()) {
                 Long value = READER_SIGNED_LONG.read(parser);
+                parser.next();
                 assertEquals(i++, value.intValue());
-                value = READER_SIGNED_LONG.read(parser);
-                assertNull(value);
+                assertFalse(parser.hasNext());
                 parser = new EBMLParser(in, ctx);
             }
+            assertEquals(Short.MAX_VALUE + 1, i);
         }
     }
 
@@ -127,15 +126,13 @@ public class EBMLParserTest {
         ByteArrayInput in = new ByteArrayInput(out.getBytes());
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            while (parser.hasNext()) {
-                List<Long> value = READER_LIST_SIGNED_LONG.read(parser);
-                for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
-                    assertEquals(i, value.get(c).longValue());
-                }
-                value = READER_LIST_SIGNED_LONG.read(parser);
-                assertNull(value);
-                parser = new EBMLParser(in, ctx);
+            assertTrue(parser.hasNext());
+            List<Long> value = READER_LIST_SIGNED_LONG.read(parser);
+            parser.next();
+            for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
+                assertEquals(i, value.get(c).longValue());
             }
+            assertFalse(parser.hasNext());
         }
     }
 
@@ -151,28 +148,28 @@ public class EBMLParserTest {
             int i = Short.MIN_VALUE;
             while (parser.hasNext()) {
                 Number value = READER_SIGNED_NUMBER.read(parser);
+                parser.next();
                 assertEquals((i++ % 2 == 0 ? Long.class : Integer.class), value.getClass());
-                value = READER_SIGNED_NUMBER.read(parser);
-                assertNull(value);
+                assertFalse(parser.hasNext());
                 parser = new EBMLParser(in, ctx);
             }
+            assertEquals(Short.MAX_VALUE + 1, i);
         }
     }
 
     @Test
     public void parserReadStringTest() throws IOException {
+        String data = "Hello dolly! How are you?";
         ByteArrayOutput out = new ByteArrayOutput();
-        writeValue(out, TEST, "Hello dolly! How are you?".getBytes());
+        writeValue(out, TEST, data.getBytes());
         ByteArrayInput in = new ByteArrayInput(out.getBytes());
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            while (parser.hasNext()) {
-                String value = READER_STRING.read(parser);
-                System.out.println(value);
-                value = READER_STRING.read(parser);
-                assertNull(value);
-                parser = new EBMLParser(in, ctx);
-            }
+            assertTrue(parser.hasNext());
+            String value = READER_STRING.read(parser);
+            parser.next();
+            assertEquals(data, value);
+            assertFalse(parser.hasNext());
         }
     }
 

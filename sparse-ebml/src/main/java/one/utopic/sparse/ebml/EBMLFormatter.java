@@ -56,8 +56,8 @@ public class EBMLFormatter implements Formatter {
         }
     }
 
-    public int getHeaderSize(EBMLType type, int size) throws IOException {
-        return type.getEBMLCode().getSize() + getCodeLength(intToBytes(size));
+    public int getPartSize(EBMLType type, int size) throws IOException {
+        return type.getEBMLCode().getSize() + getCodeLength(intToBytes(size)) + size;
     }
 
     public void newHeader(EBMLType type, int size) throws IOException {
