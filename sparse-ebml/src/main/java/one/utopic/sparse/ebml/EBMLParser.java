@@ -35,7 +35,7 @@ import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
 public class EBMLParser implements Parser, SkippableParser {
 
-    protected final Stack<EBMLInputHeader> stack;
+    private final Stack<EBMLInputHeader> stack;
 
     public EBMLParser(Input input, EBMLType.Context typeContext) throws IOException {
         this.stack = new Stack<EBMLInputHeader>();
@@ -46,50 +46,49 @@ public class EBMLParser implements Parser, SkippableParser {
     }
 
     public boolean hasNext() throws IOException {
-        return !stack.isEmpty();
+        return !this.stack.isEmpty();
     }
 
     public EBMLHeader getHeader() throws IOException {
-        return stack.isEmpty() ? null : stack.peek();
+        return this.stack.isEmpty() ? null : this.stack.peek();
     }
 
     public EBMLHeader readHeader() throws IOException {
-        if (stack.isEmpty()) {
+        if (this.stack.isEmpty()) {
             return null;
         }
-        EBMLInputHeader parent = stack.peek();
+        EBMLInputHeader parent = this.stack.peek();
         EBMLInputHeader header = readHeader(parent.input, parent.getType().getContext());
-        return header == null ? null : stack.push(header);
+        return header == null ? null : this.stack.push(header);
     }
 
     public void read(Output out) throws IOException {
-        if (stack.isEmpty()) {
+        if (this.stack.isEmpty()) {
             return;
         }
-        WrappedInput in = stack.peek().input;
+        WrappedInput in = this.stack.peek().input;
         while (!in.isFinished() && !out.isFinished()) {
             out.writeByte(in.readByte());
         }
     }
 
     public void next() throws IOException {
-        if (stack.isEmpty()) {
+        if (this.stack.isEmpty()) {
             throw new ParserIOException("Failed to finish header. Header stack is empty.");
         }
-        if (!stack.peek().input.isFinished()) {
+        if (!this.stack.peek().input.isFinished()) {
             throw new ParserIOException("Failed to finish header. Header has more data to read.");
         }
-        EBMLInputHeader header = stack.pop();
-        if (!stack.isEmpty()) {
-            stack.peek().input.advance(header.length);
+        EBMLInputHeader header = this.stack.pop();
+        if (!this.stack.isEmpty()) {
+            this.stack.peek().input.advance(header.length);
         }
     }
 
     public void skip() throws IOException {
-        EBMLInputHeader header = stack.peek();
+        EBMLInputHeader header = this.stack.peek();
         if (header != null) {
-            WrappedInput in = header.input;
-            intSkip(in, in.remain);
+            header.skip();
             next();
         }
     }
@@ -99,43 +98,18 @@ public class EBMLParser implements Parser, SkippableParser {
             EBMLCode typeCode = new EBMLCode(readTag(input));
             int length = readLength(input);
             EBMLType type = typeContext.getType(typeCode);
+            WrappedInput wInput = new WrappedInput(input, length);
             if (type != null) {
-                return new EBMLInputHeader(type, new WrappedInput(input, length));
+                return new EBMLInputHeader(type, wInput);
             } else {
                 // TODO LOG
-                intSkip(input, length);
+                wInput.skip();
             }
         }
         return null;
     }
 
-    protected final long longSkip(Input input, long length) throws IOException {
-        long skipped = 0;
-        while (skipped < length && !input.isFinished()) {
-            int skip = 0;
-            if (length > Integer.MAX_VALUE) {
-                skip = Integer.MAX_VALUE;
-            } else {
-                skip = (int) length;
-            }
-            skipped += intSkip(input, skip);
-        }
-        return skipped;
-    }
-
-    protected final int intSkip(Input input, int length) throws IOException {
-        int skipped;
-        if (input instanceof Skippable) {
-            skipped = ((Skippable) input).skip(length);
-        } else {
-            for (skipped = 0; skipped < length && !input.isFinished(); skipped += 1) {
-                input.readByte();
-            }
-        }
-        return skipped;
-    }
-
-    private class WrappedInput implements Input, Skippable {
+    protected class WrappedInput implements Input, Skippable {
 
         private final Input input;
         private int remain;
@@ -185,9 +159,13 @@ public class EBMLParser implements Parser, SkippableParser {
             remain -= skippedCount;
             return skippedCount;
         }
+
+        public int skip() throws IOException {
+            return skip(remain);
+        }
     }
 
-    private static class EBMLInputHeader extends EBMLHeader {
+    protected static class EBMLInputHeader extends EBMLHeader {
 
         private final WrappedInput input;
         private final int length;
@@ -197,9 +175,13 @@ public class EBMLParser implements Parser, SkippableParser {
             this.input = input;
             this.length = Objects.requireNonNull(input).remain;
         }
+
+        public int skip() throws IOException {
+            return input.skip();
+        }
     }
 
     public int getRemain() {
-        return stack.isEmpty() ? 0 : stack.peek().input.remain;
+        return this.stack.isEmpty() ? 0 : this.stack.peek().input.remain;
     }
 }

@@ -43,6 +43,7 @@ import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 public class EBMLParserTest {
 
     private static final byte[] TEST = new byte[] { -1 };
+    private static final byte[] UNKNOWN = new byte[] { -128 };
 
     private static final byte[] TEST_INT = new byte[] { -100 };
 
@@ -97,6 +98,7 @@ public class EBMLParserTest {
         ByteArrayOutput out = new ByteArrayOutput();
         for (int i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++) {
             writeValue(out, TEST, intToBytes(i));
+            writeValue(out, UNKNOWN, intToBytes(i));
         }
         ByteArrayInput in = new ByteArrayInput(out.getBytes());
         {

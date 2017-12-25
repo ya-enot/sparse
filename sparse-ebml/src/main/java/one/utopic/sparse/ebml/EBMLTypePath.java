@@ -20,23 +20,26 @@ package one.utopic.sparse.ebml;
 
 import java.util.Objects;
 
-public class EBMLHeader {
+class EBMLTypePath {
 
+    final EBMLTypePath parent;
     private final EBMLType type;
 
-    public EBMLHeader(EBMLType type) {
-        Objects.requireNonNull(type);
-        this.type = type;
+    public EBMLTypePath(EBMLType type) {
+        this(type, null);
     }
 
-    public EBMLType getType() {
-        return type;
+    public EBMLTypePath(EBMLType type, EBMLTypePath parent) {
+        Objects.requireNonNull(type);
+        this.parent = parent;
+        this.type = type;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((parent == null) ? 0 : parent.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
@@ -49,7 +52,12 @@ public class EBMLHeader {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        EBMLHeader other = (EBMLHeader) obj;
+        EBMLTypePath other = (EBMLTypePath) obj;
+        if (parent == null) {
+            if (other.parent != null)
+                return false;
+        } else if (!parent.equals(other.parent))
+            return false;
         if (type == null) {
             if (other.type != null)
                 return false;
@@ -58,4 +66,19 @@ public class EBMLHeader {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return (parent == null ? "!" : parent + ".") + type.getName();
+    }
+
+    public static EBMLTypePath typePath(EBMLType... path) {
+        if (path.length == 0) {
+            return null;
+        }
+        EBMLTypePath typePath = new EBMLTypePath(path[0]);
+        for (int i = 1; i < path.length; i++) {
+            typePath = new EBMLTypePath(path[i], typePath);
+        }
+        return typePath;
+    }
 }

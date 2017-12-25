@@ -18,14 +18,15 @@
  */
 package one.utopic.sparse.api;
 
-public interface AnchorParser<T, P extends AnchorParser<T, P>> extends Parser {
+import java.io.IOException;
+import java.util.List;
 
-    <O> AnchorSelector<T, O> select(Reader<P, O> reader);
+public interface AnchorParser<T, P extends Parser> {
 
-    interface AnchorSelector<T, O> {
+    <O> Anchor<O> newAnchor(Reader<P, O> reader, T anchorPath);
 
-        Anchor<O> at(T... path);
+    List<Anchor<?>> read(Anchor<?>... anchors) throws IOException;
 
-    }
+    List<Anchor<?>> readAll() throws IOException;
 
 }

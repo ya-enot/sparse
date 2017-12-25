@@ -18,8 +18,10 @@
  */
 package one.utopic.sparse.api;
 
+import java.util.List;
+
 public interface Anchor<O> {
 
-    O get();
+    List<O> get();
 
 }
