@@ -20,7 +20,7 @@ package one.utopic.sparse.api;
 
 import java.io.IOException;
 
-public interface SkippableParser {
+public interface SkippableParser extends Parser {
 
     void skip() throws IOException;
 

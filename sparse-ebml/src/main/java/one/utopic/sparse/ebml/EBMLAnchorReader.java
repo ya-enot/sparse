@@ -28,15 +28,15 @@ import java.util.Objects;
 import java.util.Set;
 
 import one.utopic.sparse.api.Anchor;
-import one.utopic.sparse.api.AnchorParser;
+import one.utopic.sparse.api.AnchorReader;
 import one.utopic.sparse.api.Reader;
 
-public class EBMLAnchorParser implements AnchorParser<EBMLTypePath, EBMLParser> {
+public class EBMLAnchorReader implements AnchorReader<EBMLTypePath, EBMLParser> {
 
     private final Map<EBMLTypePath, EBMLAnchor<?>> anchorMap;
     private EBMLTypePath typePath = null;
 
-    public EBMLAnchorParser() throws IOException {
+    public EBMLAnchorReader() throws IOException {
         this.anchorMap = new HashMap<EBMLTypePath, EBMLAnchor<?>>();
     }
 
@@ -52,7 +52,7 @@ public class EBMLAnchorParser implements AnchorParser<EBMLTypePath, EBMLParser> 
             throw new IllegalArgumentException("Anchors duplicate at " + typePath);
         }
         while ((typePath = typePath.getParent()) != null) {
-            if (null != anchorMap.put(typePath, null)) {
+            if (!anchorMap.containsKey(typePath) && null != anchorMap.put(typePath, null)) {
                 throw new IllegalArgumentException("Anchors overlap at " + typePath);
             }
         }
@@ -87,32 +87,56 @@ public class EBMLAnchorParser implements AnchorParser<EBMLTypePath, EBMLParser> 
     }
 
     public Anchor<?> read(EBMLParser parser) throws IOException {
-        while (parser.hasNext()) {
-            EBMLHeader header = parser.getHeader();
+        Objects.requireNonNull(parser);
+        Filter filter = new Filter(parser.getFilter());
+        EBMLHeader header = parser.getHeader();
+        EBMLAnchor<?> anchor = null;
+        while (parser.hasNext() && header != null && anchor == null) {
             EBMLTypePath typePath = new EBMLTypePath(header.getType(), this.typePath);
             if (anchorMap.containsKey(typePath)) {
-                EBMLAnchor<?> anchor = anchorMap.get(typePath);
+                anchor = anchorMap.get(typePath);
                 if (anchor != null) {
-                    anchor.read(parser);
+                    this.typePath = typePath;
+                    anchor.read(parser.filter(filter));
+                    this.typePath = this.typePath.getParent();
                     parser.next();
-                    readHeader(parser);
-                    return anchor;
                 } else {
                     this.typePath = typePath;
-                    readHeader(parser);
                 }
             } else {
                 parser.skip();
-                readHeader(parser);
+            }
+            while (parser.hasNext() && (header = parser.readHeader()) == null && this.typePath != null) {
+                this.typePath = this.typePath.getParent();
+                parser.next();
             }
         }
-        return null;
+        return anchor;
     }
 
-    private void readHeader(EBMLParser parser) throws IOException {
-        while (parser.readHeader() == null && this.typePath != null) {
-            this.typePath = this.typePath.getParent();
-            parser.next();
+    private class Filter implements EBMLFilter {
+
+        private final EBMLFilter subfilter;
+
+        public Filter(EBMLFilter filter) {
+            this.subfilter = filter;
+        }
+
+        public boolean filter(EBMLParser parser, EBMLHeader header) throws IOException {
+            if (subfilter != null && !subfilter.filter(parser, header)) {
+                return false;
+            }
+            EBMLTypePath typePath = new EBMLTypePath(header.getType(), EBMLAnchorReader.this.typePath);
+            if (anchorMap.containsKey(typePath)) {
+                EBMLAnchor<?> anchor = anchorMap.get(typePath);
+                if (anchor != null) {
+                    EBMLAnchorReader.this.typePath = typePath;
+                    anchor.read(parser);
+                    EBMLAnchorReader.this.typePath = typePath.getParent();
+                    return false;
+                }
+            }
+            return true;
         }
     }
 

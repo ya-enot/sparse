@@ -39,7 +39,7 @@ import one.utopic.sparse.ebml.reader.EBMLStringReader;
 
 import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
-public class EBMLAnchorParserTest {
+public class EBMLAnchorReaderTest {
 
     private static final byte[] TEST = new byte[] { -1 };
 
@@ -97,7 +97,7 @@ public class EBMLAnchorParserTest {
         ByteArrayInput in = new ByteArrayInput(out.getBytes());
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            EBMLAnchorParser anchorParser = new EBMLAnchorParser();
+            EBMLAnchorReader anchorParser = new EBMLAnchorReader();
             EBMLTypePath path = EBMLTypePath.typePath(TEST_TYPE, TEST_TYPE, TEST_TYPE, TEST_TYPE, TEST_LONG_TYPE);
             Anchor<Long> anchor = anchorParser.newAnchor(READER_SIGNED_LONG, path);
             anchorParser.newAnchor(READER_STRING, EBMLTypePath.typePath(TEST_TYPE, TEST_TYPE, TEST_TYPE, TEST2_TYPE));
@@ -128,7 +128,7 @@ public class EBMLAnchorParserTest {
         in = new ByteArrayInput(out.getBytes());
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            EBMLAnchorParser anchorParser = new EBMLAnchorParser();
+            EBMLAnchorReader anchorParser = new EBMLAnchorReader();
             EBMLTypePath path = EBMLTypePath.typePath(TEST_TYPE, TEST_TYPE, TEST_TYPE, TEST_TYPE, TEST_LONG_TYPE);
             Anchor<Long> anchor = anchorParser.newAnchor(READER_SIGNED_LONG, path);
             EBMLTypePath path0 = EBMLTypePath.typePath(TEST_TYPE, TEST_TYPE, TEST_TYPE, TEST2_TYPE);
@@ -170,7 +170,7 @@ public class EBMLAnchorParserTest {
         ByteArrayInput in = new ByteArrayInput(out.getBytes());
         {
             EBMLParser parser = new EBMLParser(in, ctx);
-            EBMLAnchorParser anchorParser = new EBMLAnchorParser();
+            EBMLAnchorReader anchorParser = new EBMLAnchorReader();
             EBMLTypePath path = EBMLTypePath.typePath(TEST_TYPE);
             Anchor<List<Long>> anchor = anchorParser.newAnchor(READER_LIST_SIGNED_LONG, path);
             {
@@ -182,10 +182,49 @@ public class EBMLAnchorParserTest {
                 List<List<Long>> results = anchor.get();
                 assertEquals(1, results.size());
                 List<Long> value = results.get(0);
+                assertEquals(Short.MAX_VALUE * 2 + 2, value.size());
                 for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
                     assertEquals(i, value.get(c).longValue());
                 }
+            }
+        }
+    }
+
+    @Test
+    public void anchorParserReadRootOverrideTest() throws IOException {
+        ByteArrayOutput out = new ByteArrayOutput();
+        {
+            ByteArrayOutput outData = new ByteArrayOutput();
+            for (int i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++) {
+                writeValue(outData, TEST_LONG, intToBytes(i));
+            }
+            writeValue(out, TEST, outData.getBytes());
+        }
+        ByteArrayInput in = new ByteArrayInput(out.getBytes());
+        {
+            EBMLParser parser = new EBMLParser(in, ctx);
+            EBMLAnchorReader anchorParser = new EBMLAnchorReader();
+            EBMLTypePath path = EBMLTypePath.typePath(TEST_TYPE);
+            EBMLTypePath path1 = EBMLTypePath.typePath(TEST_TYPE, TEST_LONG_TYPE);
+            Anchor<List<Long>> anchor = anchorParser.newAnchor(READER_LIST_SIGNED_LONG, path);
+            Anchor<Long> anchor1 = anchorParser.newAnchor(READER_SIGNED_LONG, path1);
+            {
+                Anchor<?> result = anchorParser.read(parser);
+                assertNotNull(result);
+                assertEquals(anchor, result);
+            }
+            {
+                List<List<Long>> results = anchor.get();
+                assertEquals(1, results.size());
+                List<Long> value = results.get(0);
+                assertEquals(0, value.size());
+            }
+            {
+                List<Long> value = anchor1.get();
                 assertEquals(Short.MAX_VALUE * 2 + 2, value.size());
+                for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
+                    assertEquals(i, value.get(c).longValue());
+                }
             }
         }
     }

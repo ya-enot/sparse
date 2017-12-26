@@ -26,6 +26,7 @@ import java.util.Stack;
 import one.utopic.abio.api.Skippable;
 import one.utopic.abio.api.input.Input;
 import one.utopic.abio.api.output.Output;
+import one.utopic.sparse.api.FilterableParser;
 import one.utopic.sparse.api.Parser;
 import one.utopic.sparse.api.SkippableParser;
 import one.utopic.sparse.api.exception.ParserIOException;
@@ -33,16 +34,26 @@ import one.utopic.sparse.ebml.EBMLType.Context;
 
 import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
-public class EBMLParser implements Parser, SkippableParser {
+public class EBMLParser implements Parser, SkippableParser, FilterableParser<EBMLFilter, EBMLParser> {
 
     private final Stack<EBMLInputHeader> stack;
+    private final EBMLFilter filter;
 
     public EBMLParser(Input input, EBMLType.Context typeContext) throws IOException {
-        this.stack = new Stack<EBMLInputHeader>();
+        this(input, typeContext, null);
+    }
+
+    public EBMLParser(Input input, EBMLType.Context typeContext, EBMLFilter filter) throws IOException {
+        this(new Stack<EBMLInputHeader>(), filter);
         EBMLInputHeader header = readHeader(input, typeContext);
         if (header != null) {
             this.stack.push(header);
         }
+    }
+
+    private EBMLParser(Stack<EBMLInputHeader> stack, EBMLFilter filter) {
+        this.stack = stack;
+        this.filter = filter;
     }
 
     public boolean hasNext() throws IOException {
@@ -58,8 +69,16 @@ public class EBMLParser implements Parser, SkippableParser {
             return null;
         }
         EBMLInputHeader parent = this.stack.peek();
-        EBMLInputHeader header = readHeader(parent.input, parent.getType().getContext());
-        return header == null ? null : this.stack.push(header);
+        EBMLInputHeader header;
+        while ((header = readHeader(parent.input, parent.getType().getContext())) != null) {
+            header = this.stack.push(header);
+            if (filter != null && !filter.filter(this, header)) {
+                skip();
+            } else {
+                break;
+            }
+        }
+        return header;
     }
 
     public void read(Output out) throws IOException {
@@ -99,7 +118,6 @@ public class EBMLParser implements Parser, SkippableParser {
             if (type != null) {
                 return new EBMLInputHeader(type, wInput);
             } else {
-                // TODO LOG
                 wInput.skip();
             }
         }
@@ -168,4 +186,13 @@ public class EBMLParser implements Parser, SkippableParser {
     public int getRemain() {
         return this.stack.isEmpty() ? 0 : this.stack.peek().input.remain;
     }
+
+    public EBMLParser filter(EBMLFilter filter) {
+        return new EBMLParser(stack, filter);
+    }
+
+    public EBMLFilter getFilter() {
+        return filter;
+    }
+
 }

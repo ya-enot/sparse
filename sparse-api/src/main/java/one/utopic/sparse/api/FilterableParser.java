@@ -18,15 +18,10 @@
  */
 package one.utopic.sparse.api;
 
-import java.io.IOException;
-import java.util.Set;
+public interface FilterableParser<F, P extends FilterableParser<F, P>> extends Parser {
 
-public interface AnchorParser<T, P extends Parser> {
+    P filter(F filter);
 
-    <O> Anchor<O> newAnchor(Reader<P, O> reader, T anchorPath);
-
-    Anchor<?> read(P parser) throws IOException;
-
-    Set<Anchor<?>> readAll(P parser) throws IOException;
+    F getFilter();
 
 }
