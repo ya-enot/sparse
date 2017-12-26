@@ -22,7 +22,7 @@ import java.util.Objects;
 
 class EBMLTypePath {
 
-    final EBMLTypePath parent;
+    private final EBMLTypePath parent;
     private final EBMLType type;
 
     public EBMLTypePath(EBMLType type) {
@@ -35,13 +35,13 @@ class EBMLTypePath {
         this.type = type;
     }
 
+    public EBMLTypePath getParent() {
+        return parent;
+    }
+
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((parent == null) ? 0 : parent.hashCode());
-        result = prime * result + ((type == null) ? 0 : type.hashCode());
-        return result;
+        return calculateHashCode(type, parent);
     }
 
     @Override
@@ -80,5 +80,13 @@ class EBMLTypePath {
             typePath = new EBMLTypePath(path[i], typePath);
         }
         return typePath;
+    }
+
+    private static int calculateHashCode(EBMLType type, EBMLTypePath parent) {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((parent == null) ? 0 : parent.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        return result;
     }
 }

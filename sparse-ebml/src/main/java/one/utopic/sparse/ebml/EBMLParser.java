@@ -79,10 +79,7 @@ public class EBMLParser implements Parser, SkippableParser {
         if (!this.stack.peek().input.isFinished()) {
             throw new ParserIOException("Failed to finish header. Header has more data to read.");
         }
-        EBMLInputHeader header = this.stack.pop();
-        if (!this.stack.isEmpty()) {
-            this.stack.peek().input.advance(header.length);
-        }
+        this.stack.pop();
     }
 
     public void skip() throws IOException {
@@ -117,18 +114,7 @@ public class EBMLParser implements Parser, SkippableParser {
         public WrappedInput(Input input, int remain) {
             Objects.requireNonNull(input);
             this.remain = remain;
-            if (input instanceof WrappedInput) {
-                this.input = ((WrappedInput) input).input;
-            } else {
-                this.input = input;
-            }
-        }
-
-        public void advance(int length) throws IOException {
-            if (length > remain) {
-                throw new IOException("Can not advance more than remain");
-            }
-            remain -= length;
+            this.input = input;
         }
 
         public boolean isFinished() {
@@ -168,12 +154,10 @@ public class EBMLParser implements Parser, SkippableParser {
     protected static class EBMLInputHeader extends EBMLHeader {
 
         private final WrappedInput input;
-        private final int length;
 
         public EBMLInputHeader(EBMLType type, WrappedInput input) {
             super(type);
             this.input = input;
-            this.length = Objects.requireNonNull(input).remain;
         }
 
         public int skip() throws IOException {

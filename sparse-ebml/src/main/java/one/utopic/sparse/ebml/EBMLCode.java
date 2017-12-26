@@ -85,7 +85,7 @@ public final class EBMLCode {
 
     @Override
     public String toString() {
-        return "EBMLCode [" + bytesToHex(code) + "]";
+        return "EBMLCode [0x" + bytesToHex(code) + "]";
     }
 
     @Override

@@ -46,7 +46,7 @@ public class EBMLListReader<T> implements Reader<EBMLParser, List<T>> {
 
     public List<T> read(EBMLParser parser) throws IOException {
         List<T> list = newList();
-        EBMLHeader elementHeader = null;
+        EBMLHeader elementHeader;
         while ((elementHeader = parser.readHeader()) != null) {
             if (elementHeader.getType().equals(elementType)) {
                 list.add(elementReader.read(parser));

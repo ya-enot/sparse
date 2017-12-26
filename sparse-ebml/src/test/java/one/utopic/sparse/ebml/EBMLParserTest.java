@@ -131,6 +131,7 @@ public class EBMLParserTest {
             assertTrue(parser.hasNext());
             List<Long> value = READER_LIST_SIGNED_LONG.read(parser);
             parser.next();
+            assertEquals(Short.MAX_VALUE * 2 + 2, value.size());
             for (int c = 0, i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++, c++) {
                 assertEquals(i, value.get(c).longValue());
             }

@@ -20,11 +20,11 @@ package one.utopic.sparse.ebml;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import one.utopic.sparse.api.Anchor;
@@ -33,16 +33,11 @@ import one.utopic.sparse.api.Reader;
 
 public class EBMLAnchorParser implements AnchorParser<EBMLTypePath, EBMLParser> {
 
-    private final EBMLParser parser;
     private final Map<EBMLTypePath, EBMLAnchor<?>> anchorMap;
     private EBMLTypePath typePath = null;
 
-    public EBMLAnchorParser(EBMLParser parser) throws IOException {
-        this.parser = parser;
+    public EBMLAnchorParser() throws IOException {
         this.anchorMap = new HashMap<EBMLTypePath, EBMLAnchor<?>>();
-        if (parser.hasNext()) {
-            this.typePath = new EBMLTypePath(parser.getHeader().getType());
-        }
     }
 
     public <O> Anchor<O> newAnchor(Reader<EBMLParser, O> reader, EBMLTypePath anchorPath) {
@@ -52,11 +47,11 @@ public class EBMLAnchorParser implements AnchorParser<EBMLTypePath, EBMLParser> 
     }
 
     protected void registerAnchorPath(EBMLTypePath typePath, EBMLAnchor<?> anchor) {
-        if (typePath == null) {
-            typePath = this.typePath;
+        Objects.requireNonNull(typePath);
+        if (null != anchorMap.put(typePath, anchor)) {
+            throw new IllegalArgumentException("Anchors duplicate at " + typePath);
         }
-        anchorMap.put(typePath, anchor);
-        while ((typePath = typePath.parent) != null) {
+        while ((typePath = typePath.getParent()) != null) {
             if (null != anchorMap.put(typePath, null)) {
                 throw new IllegalArgumentException("Anchors overlap at " + typePath);
             }
@@ -82,61 +77,43 @@ public class EBMLAnchorParser implements AnchorParser<EBMLTypePath, EBMLParser> 
 
     }
 
-    public List<Anchor<?>> read(Anchor<?>... anchors) throws IOException {
-        return read(anchors.length, anchors);
+    public Set<Anchor<?>> readAll(EBMLParser parser) throws IOException {
+        Set<Anchor<?>> result = new HashSet<Anchor<?>>();
+        Anchor<?> read;
+        while ((read = read(parser)) != null) {
+            result.add(read);
+        }
+        return result;
     }
 
-    public List<Anchor<?>> readAll() throws IOException {
-        return read(-1);
-    }
-
-    protected List<Anchor<?>> read(int count, Anchor<?>... anchors) throws IOException {
-        List<Anchor<?>> read = new ArrayList<Anchor<?>>();
-        Set<Anchor<?>> check = new HashSet<Anchor<?>>();
-        for (int i = 0; i < anchors.length; i++) {
-            check.add(anchors[i]);
-        }
-        {
-            EBMLTypePath rootTypePath = new EBMLTypePath(parser.getHeader().getType());
-            if (!anchorMap.containsKey(rootTypePath)) {
-                return read;
-            }
-            EBMLAnchor<?> rootAnchor = anchorMap.get(rootTypePath);
-            if (rootAnchor != null) {
-                rootAnchor.read(parser);
-                if (count == -1 || check.contains(rootAnchor)) {
-                    read.add(rootAnchor);
-                }
-                return read;
-            }
-        }
-        while (parser.hasNext() && (count == -1 || count > 0)) {
-            EBMLHeader header = parser.readHeader();
-            if (header == null) {
-                parser.next();
-                if (this.typePath == null) {
-                    throw new EmptyStackException();
-                }
-                this.typePath = this.typePath.parent;
-                continue;
-            }
+    public Anchor<?> read(EBMLParser parser) throws IOException {
+        while (parser.hasNext()) {
+            EBMLHeader header = parser.getHeader();
             EBMLTypePath typePath = new EBMLTypePath(header.getType(), this.typePath);
             if (anchorMap.containsKey(typePath)) {
                 EBMLAnchor<?> anchor = anchorMap.get(typePath);
                 if (anchor != null) {
                     anchor.read(parser);
                     parser.next();
-                    if (count == -1 || check.contains(anchor)) {
-                        read.add(anchor);
-                    }
+                    readHeader(parser);
+                    return anchor;
                 } else {
                     this.typePath = typePath;
+                    readHeader(parser);
                 }
             } else {
                 parser.skip();
+                readHeader(parser);
             }
         }
-        return read;
+        return null;
+    }
+
+    private void readHeader(EBMLParser parser) throws IOException {
+        while (parser.readHeader() == null && this.typePath != null) {
+            this.typePath = this.typePath.getParent();
+            parser.next();
+        }
     }
 
 }
