@@ -148,7 +148,7 @@ public final class EBMLHelper {
     }
 
     // Acts like a BigInteger, except that zero length byte array results in 0
-    public static long bytesToLong(byte[] ba) throws IOException {
+    public static long bytesToLong(byte[] ba) {
         if (ba.length < 1) {
             return 0;
         }
@@ -156,7 +156,7 @@ public final class EBMLHelper {
     }
 
     // Acts like a BigInteger, except that 0 results in zero length byte array
-    public static byte[] longToBytes(long value) throws IOException {
+    public static byte[] longToBytes(long value) {
         if (value == 0) {
             return EMPTY;
         }
@@ -164,7 +164,7 @@ public final class EBMLHelper {
     }
 
     // Acts like a BigInteger, except that zero length byte array results in 0
-    public static int bytesToInt(byte[] ba) throws IOException {
+    public static int bytesToInt(byte[] ba) {
         if (ba.length < 1) {
             return 0;
         }
@@ -172,7 +172,7 @@ public final class EBMLHelper {
     }
 
     // Acts like a BigInteger, except that 0 results in zero length byte array
-    public static byte[] intToBytes(int value) throws IOException {
+    public static byte[] intToBytes(int value) {
         if (value == 0) {
             return EMPTY;
         }

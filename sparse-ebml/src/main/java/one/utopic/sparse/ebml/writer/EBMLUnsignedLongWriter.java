@@ -26,7 +26,7 @@ import one.utopic.sparse.ebml.util.ByteArrayInput;
 
 import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
-public class EBMLUnignedLongWriter implements EBMLWriter<EBMLFormatter, Long> {
+public class EBMLUnsignedLongWriter implements EBMLWriter<EBMLFormatter, Long> {
 
     public Part<EBMLFormatter> prepare(final Long o) throws IOException {
         if (o < 0) {
