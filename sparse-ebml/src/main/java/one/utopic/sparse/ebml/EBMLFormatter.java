@@ -22,38 +22,18 @@ import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Stack;
 
 import one.utopic.abio.api.input.Input;
 import one.utopic.abio.api.output.Output;
 import one.utopic.sparse.api.Formatter;
-import one.utopic.sparse.api.exception.ParserIOException;
 
 public class EBMLFormatter implements Formatter {
 
-    protected final Stack<EBMLOutputHeader> stack;
     protected final Output output;
 
     public EBMLFormatter(Output output) {
+        Objects.requireNonNull(output);
         this.output = output;
-        this.stack = new Stack<EBMLOutputHeader>();
-    }
-
-    public boolean hasNext() throws IOException {
-        return !stack.isEmpty();
-    }
-
-    public void next() throws IOException {
-        if (stack.isEmpty()) {
-            throw new ParserIOException("Failed to finish header. Header stack is empty.");
-        }
-        if (!stack.peek().output.isFinished()) {
-            throw new ParserIOException("Failed to finish header. Header has more data to read.");
-        }
-        EBMLOutputHeader header = stack.pop();
-        if (!stack.isEmpty()) {
-            stack.peek().output.advance(header.length);
-        }
     }
 
     public int getPartSize(EBMLType type, int size) throws IOException {
@@ -61,67 +41,14 @@ public class EBMLFormatter implements Formatter {
     }
 
     public void newHeader(EBMLType type, int size) throws IOException {
-        Output out = output;
-        if (!stack.isEmpty()) {
-            out = stack.peek().output;
-        }
-        type.getEBMLCode().write(out);
-        writeUnsignedCode(out, intToBytes(size));
-        stack.push(new EBMLOutputHeader(type, new WrappedOutput(output, size)));
+        type.getEBMLCode().write(output);
+        writeUnsignedCode(output, intToBytes(size));
     }
 
     public void write(Input in) throws IOException {
-        if (stack.isEmpty()) {
-            return;
-        }
-        WrappedOutput out = stack.peek().output;
-        while (!in.isFinished() && !out.isFinished()) {
-            out.writeByte(in.readByte());
+        while (!in.isFinished() && !output.isFinished()) {
+            output.writeByte(in.readByte());
         }
     }
 
-    private class WrappedOutput implements Output {
-
-        private final Output output;
-        private int remain;
-
-        public WrappedOutput(Output output, int size) {
-            Objects.requireNonNull(output);
-            this.remain = size;
-            if (output instanceof WrappedOutput) {
-                this.output = ((WrappedOutput) output).output;
-            } else {
-                this.output = output;
-            }
-        }
-
-        public boolean isFinished() {
-            return remain < 1 || output.isFinished();
-        }
-
-        public void writeByte(byte b) throws IOException {
-            output.writeByte(b);
-            remain -= 1;
-        }
-
-        public void advance(int length) throws IOException {
-            if (length > remain) {
-                throw new IOException("Can not advance more than remain");
-            }
-            remain -= length;
-        }
-
-    }
-
-    private static class EBMLOutputHeader extends EBMLHeader {
-
-        private final WrappedOutput output;
-        private final int length;
-
-        public EBMLOutputHeader(EBMLType type, WrappedOutput output) {
-            super(type);
-            this.output = output;
-            this.length = Objects.requireNonNull(output).remain;
-        }
-    }
 }

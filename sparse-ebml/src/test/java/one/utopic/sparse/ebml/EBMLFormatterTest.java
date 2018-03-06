@@ -28,7 +28,7 @@ import java.util.List;
 import org.junit.Test;
 
 import one.utopic.sparse.api.Reader;
-import one.utopic.sparse.ebml.EBMLType.Context;
+import one.utopic.sparse.ebml.EBMLType.RootContext;
 import one.utopic.sparse.ebml.EBMLWriter.Part;
 import one.utopic.sparse.ebml.TestHelper.ByteArrayInput;
 import one.utopic.sparse.ebml.reader.EBMLListReader;
@@ -42,7 +42,7 @@ public class EBMLFormatterTest {
 
     private static final byte[] TEST = new byte[] { -1 };
 
-    private final Context ctx = new Context();
+    private final RootContext ctx = new RootContext();
 
     private final EBMLType TEST_TYPE = ctx.newType("Test", new EBMLCode(TEST));
 

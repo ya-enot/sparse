@@ -63,7 +63,6 @@ public class EBMLCollectionWriter<T> implements EBMLWriter<EBMLFormatter, Collec
                     Part<EBMLFormatter> part = it.next();
                     formatter.newHeader(elementType, part.getSize(formatter));
                     part.write(formatter);
-                    formatter.next();
                 }
             }
         };

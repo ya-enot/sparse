@@ -28,7 +28,7 @@ import one.utopic.abio.api.output.Output;
 
 public final class EBMLCode {
 
-    private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
+    private static final char[] hexArray = "0123456789abcdef".toCharArray();
 
     private static final HashMap<EBMLCode, EBMLCode> internalCache = new HashMap<EBMLCode, EBMLCode>();
 
@@ -56,7 +56,7 @@ public final class EBMLCode {
 
     public EBMLCode(byte[] code) {
         if (!isCodeValid(code)) {
-            throw new IllegalArgumentException("Code is not a valid EBML coded data");
+            throw new IllegalArgumentException("EBMLCode [" + bytesToHex(code) + "] is not a valid EBML coded data");
         }
         this.code = code;
     }
@@ -84,11 +84,6 @@ public final class EBMLCode {
     }
 
     @Override
-    public String toString() {
-        return "EBMLCode [0x" + bytesToHex(code) + "]";
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
@@ -100,6 +95,11 @@ public final class EBMLCode {
         if (!Arrays.equals(code, other.code))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "EBMLCode [" + bytesToHex(code) + "]";
     }
 
 }

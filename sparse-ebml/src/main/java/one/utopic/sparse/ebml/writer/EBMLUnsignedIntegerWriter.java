@@ -26,25 +26,25 @@ import one.utopic.sparse.ebml.util.ByteArrayInput;
 
 import static one.utopic.sparse.ebml.util.EBMLHelper.*;
 
-public class EBMLUnignedIntegerWriter implements EBMLWriter<EBMLFormatter, Integer> {
+public class EBMLUnsignedIntegerWriter implements EBMLWriter<EBMLFormatter, Integer> {
 
-    public Part<EBMLFormatter> prepare(final Integer o) throws IOException {
-        if (o < 0) {
-            throw new IOException("Unsigned integer value write as negative");
-        }
-        return o == null ? null : new Part<EBMLFormatter>() {
+	public Part<EBMLFormatter> prepare(final Integer o) throws IOException {
+		if (o < 0) {
+			throw new IOException("Unsigned integer value write as negative");
+		}
+		return o == null ? null : new Part<EBMLFormatter>() {
 
-            private final byte[] data = intToBytes(o);
+			private final byte[] data = intToBytes(o);
 
-            public void write(EBMLFormatter formatter) throws IOException {
-                formatter.write(new ByteArrayInput(data));
-            }
+			public void write(EBMLFormatter formatter) throws IOException {
+				formatter.write(new ByteArrayInput(data));
+			}
 
-            public int getSize(EBMLFormatter formatter) throws IOException {
-                return data.length;
-            }
+			public int getSize(EBMLFormatter formatter) throws IOException {
+				return data.length;
+			}
 
-        };
-    }
+		};
+	}
 
 }
