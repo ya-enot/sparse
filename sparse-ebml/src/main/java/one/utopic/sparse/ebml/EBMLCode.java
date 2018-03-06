@@ -56,7 +56,7 @@ public final class EBMLCode {
 
     public EBMLCode(byte[] code) {
         if (!isCodeValid(code)) {
-            throw new IllegalArgumentException("Code is not a valid EBML coded data");
+            throw new IllegalArgumentException("EBMLCode [" + bytesToHex(code) + "] is not a valid EBML coded data");
         }
         this.code = code;
     }
@@ -99,7 +99,7 @@ public final class EBMLCode {
 
     @Override
     public String toString() {
-        return "EBMLCode[" + bytesToHex(code) + "]";
+        return "EBMLCode [" + bytesToHex(code) + "]";
     }
 
 }
