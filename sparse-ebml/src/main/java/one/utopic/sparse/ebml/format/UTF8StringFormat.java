@@ -16,16 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.format;
 
-import java.util.Iterator;
+import java.nio.charset.Charset;
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+import one.utopic.sparse.ebml.EBMLFormat;
 
-public interface Reader<P> extends Iterator<Event<P>> {
+/**
+ * Writes and reads UTF8 string data
+ */
+public class UTF8StringFormat implements EBMLFormat<String> {
 
-    boolean hasNext() throws SparseReaderException;
+    public static final UTF8StringFormat INSTANCE = new UTF8StringFormat();
 
-    Event<P> next() throws SparseReaderException;
+    private static final Charset CHARSET = Charset.forName("UTF8");
 
+    @Override
+    public String readFormat(byte[] data) {
+        if (data.length < 1) {
+            return "";
+        }
+        return new String(data, CHARSET);
+    }
+
+    @Override
+    public byte[] writeFormat(String data) {
+        return data.getBytes(CHARSET);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

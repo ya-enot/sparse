@@ -16,16 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.api.exception;
 
-import java.util.Iterator;
+public class SparseReaderException extends SparseException implements SparseIOException {
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+    private static final long serialVersionUID = -6560166236913796889L;
 
-public interface Reader<P> extends Iterator<Event<P>> {
+    public SparseReaderException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    boolean hasNext() throws SparseReaderException;
+    public SparseReaderException(String message) {
+        super(message);
+    }
 
-    Event<P> next() throws SparseReaderException;
+    public SparseReaderException(Throwable cause) {
+        super(cause);
+    }
+
 
 }

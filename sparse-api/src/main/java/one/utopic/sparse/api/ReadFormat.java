@@ -18,14 +18,10 @@
  */
 package one.utopic.sparse.api;
 
-import java.util.Iterator;
-
 import one.utopic.sparse.api.exception.SparseReaderException;
 
-public interface Reader<P> extends Iterator<Event<P>> {
+public interface ReadFormat<P, R extends Reader<P>, O> {
 
-    boolean hasNext() throws SparseReaderException;
-
-    Event<P> next() throws SparseReaderException;
+    O read(R r) throws SparseReaderException;
 
 }

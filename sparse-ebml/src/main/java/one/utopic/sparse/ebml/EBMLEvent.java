@@ -16,16 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml;
 
-import java.util.Iterator;
+import one.utopic.sparse.api.Event;
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+public class EBMLEvent implements Event<EBMLType> {
 
-public interface Reader<P> extends Iterator<Event<P>> {
+    private final EBMLType ebmlType;
+    private final EventType eventType;
 
-    boolean hasNext() throws SparseReaderException;
+    public EBMLEvent(EBMLType ebmlType, EventType eventType) {
+        this.ebmlType = ebmlType;
+        this.eventType = eventType;
+    }
 
-    Event<P> next() throws SparseReaderException;
+    public EBMLType get() {
+        return ebmlType;
+    }
+
+    public EventType getType() {
+        return eventType;
+    }
+
+    @Override
+    public String toString() {
+        return "EBMLEvent [eventType=" + eventType + ", ebmlType=" + ebmlType + "]";
+    }
 
 }

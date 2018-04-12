@@ -16,18 +16,40 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.ebml;
+package one.utopic.sparse.ebml.test.util;
 
-public interface EBMLType {
+import java.io.IOException;
+import java.io.InputStream;
 
-    EBMLCode getEBMLCode();
+import one.utopic.abio.api.input.Input;
 
-    Context getContext();
+public class ByteArrayStreamInput implements Input {
 
-    public static interface Context {
+    private final InputStream is;
 
-        EBMLType getType(EBMLCode code);
+    public ByteArrayStreamInput(InputStream is) {
+        this.is = is;
+    }
 
+    @Override
+    public boolean isFinished() {
+        try {
+            is.mark(1);
+            return is.read() == -1;
+        } catch (IOException e) {
+            return true;
+        } finally {
+            try {
+                is.reset();
+            } catch (IOException e) {
+                return true;
+            }
+        }
+    }
+
+    @Override
+    public byte readByte() throws IOException {
+        return (byte) is.read();
     }
 
 }
