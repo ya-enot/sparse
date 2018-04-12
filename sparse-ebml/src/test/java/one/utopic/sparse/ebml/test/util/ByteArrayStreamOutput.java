@@ -16,16 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.test.util;
 
-import java.util.Iterator;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.OutputStream;
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+import one.utopic.abio.api.output.Output;;
 
-public interface Reader<P> extends Iterator<Event<P>> {
+public class ByteArrayStreamOutput implements Output {
 
-    boolean hasNext() throws SparseReaderException;
+	private final OutputStream bos;
 
-    Event<P> next() throws SparseReaderException;
+	public ByteArrayStreamOutput(OutputStream os) {
+		this.bos = os;
+	}
+
+	@Override
+	public boolean isFinished() {
+		return false;
+	}
+
+	@Override
+	public void writeByte(byte b) throws IOException {
+		if (isFinished()) {
+			throw new EOFException();
+		}
+		bos.write(b);
+	}
 
 }

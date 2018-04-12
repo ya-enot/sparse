@@ -16,16 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml.format;
 
-import java.util.Iterator;
+import one.utopic.sparse.ebml.EBMLFormat;
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+/**
+ * Writes and reads data unmodified
+ */
+public class BytesFormat implements EBMLFormat<byte[]> {
 
-public interface Reader<P> extends Iterator<Event<P>> {
+    public static final BytesFormat INSTANCE = new BytesFormat();
 
-    boolean hasNext() throws SparseReaderException;
+    @Override
+    public byte[] writeFormat(byte[] data) {
+        return data;
+    }
 
-    Event<P> next() throws SparseReaderException;
+    @Override
+    public byte[] readFormat(byte[] data) {
+        return data;
+    }
 
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

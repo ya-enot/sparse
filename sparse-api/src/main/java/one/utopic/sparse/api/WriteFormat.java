@@ -18,14 +18,10 @@
  */
 package one.utopic.sparse.api;
 
-import java.util.Iterator;
+import one.utopic.sparse.api.exception.SparseWriterException;
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+public interface WriteFormat<P, W extends Writer<P>, O> {
 
-public interface Reader<P> extends Iterator<Event<P>> {
-
-    boolean hasNext() throws SparseReaderException;
-
-    Event<P> next() throws SparseReaderException;
+    void write(W w, O o) throws SparseWriterException;
 
 }

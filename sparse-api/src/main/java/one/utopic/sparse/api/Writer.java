@@ -18,16 +18,10 @@
  */
 package one.utopic.sparse.api;
 
-import java.io.IOException;
+import one.utopic.sparse.api.exception.SparseWriterException;
 
-public interface Writer<F extends Formatter, T> {
+public interface Writer<P> {
 
-    Part<F> prepare(T o) throws IOException;
-
-    interface Part<F extends Formatter> {
-
-        void write(F formatter) throws IOException;
-
-    }
+    void accept(Event<P> event) throws SparseWriterException;
 
 }

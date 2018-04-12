@@ -18,14 +18,21 @@
  */
 package one.utopic.sparse.api;
 
-import java.util.Iterator;
+public interface Event<P> {
 
-import one.utopic.sparse.api.exception.SparseReaderException;
+    interface EventType {
 
-public interface Reader<P> extends Iterator<Event<P>> {
+        String name();
 
-    boolean hasNext() throws SparseReaderException;
+    }
 
-    Event<P> next() throws SparseReaderException;
+    P get();
 
+    EventType getType();
+
+    enum CommonEventType implements EventType {
+
+        BEGIN, END;
+
+    }
 }

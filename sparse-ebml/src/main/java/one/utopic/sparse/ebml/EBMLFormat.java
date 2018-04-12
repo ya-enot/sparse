@@ -16,16 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with SParse.  If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package one.utopic.sparse.api;
+package one.utopic.sparse.ebml;
 
-import java.util.Iterator;
-
-import one.utopic.sparse.api.exception.SparseReaderException;
-
-public interface Reader<P> extends Iterator<Event<P>> {
-
-    boolean hasNext() throws SparseReaderException;
-
-    Event<P> next() throws SparseReaderException;
-
+public interface EBMLFormat<O> extends EBMLReader.EBMLReadFormat<O>, EBMLWriter.EBMLWriteFormat<O> {
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 }
