@@ -18,8 +18,10 @@
  */
 package one.utopic.sparse.ebml.format;
 
+import java.io.IOException;
 import java.math.BigInteger;
 
+import one.utopic.abio.api.output.Output;
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
@@ -39,15 +41,28 @@ public class LongFormat implements EBMLFormat<Long> {
     }
 
     @Override
-    public byte[] writeFormat(Long data) {
-        if (null == data || data == 0) {
-            return EMPTY_BYTE_ARRAY;
-        }
-        return BigInteger.valueOf(data).toByteArray();
+    public String toString() {
+        return getClass().getSimpleName();
     }
 
     @Override
-    public String toString() {
-        return getClass().getSimpleName();
+    public Writable getWritable(Long data) {
+        return new Writable() {
+            @Override
+            public void writeFormat(Output out) throws IOException {
+                if (data == 0) {
+                    return;
+                }
+                byte[] bytes = BigInteger.valueOf(data).toByteArray();
+                for (int i = 0; i < bytes.length; i++) {
+                    out.writeByte(bytes[i]);
+                }
+            }
+
+            @Override
+            public int getSize() {
+                return data == 0 ? 0 : 1 + ((Long.SIZE - Long.numberOfLeadingZeros(data < 0 ? -1 ^ data : data)) / Byte.SIZE);
+            }
+        };
     }
 }

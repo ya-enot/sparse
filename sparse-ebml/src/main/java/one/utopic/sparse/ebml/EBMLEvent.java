@@ -18,6 +18,8 @@
  */
 package one.utopic.sparse.ebml;
 
+import static java.util.Objects.requireNonNull;
+
 import one.utopic.sparse.api.Event;
 
 public class EBMLEvent implements Event<EBMLType> {
@@ -26,8 +28,8 @@ public class EBMLEvent implements Event<EBMLType> {
     private final EventType eventType;
 
     public EBMLEvent(EBMLType ebmlType, EventType eventType) {
-        this.ebmlType = ebmlType;
-        this.eventType = eventType;
+        this.ebmlType = requireNonNull(ebmlType);
+        this.eventType = requireNonNull(eventType);
     }
 
     public EBMLType get() {

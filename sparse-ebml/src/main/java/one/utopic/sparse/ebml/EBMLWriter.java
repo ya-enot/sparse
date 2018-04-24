@@ -18,10 +18,11 @@
  */
 package one.utopic.sparse.ebml;
 
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import one.utopic.abio.api.output.Output;
@@ -30,34 +31,87 @@ import one.utopic.sparse.api.Event.CommonEventType;
 import one.utopic.sparse.api.WriteFormat;
 import one.utopic.sparse.api.Writer;
 import one.utopic.sparse.api.exception.SparseWriterException;
-import one.utopic.sparse.ebml.format.IntegerFormat;
+import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat.Writable;
 
 public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
 
-    private static final class StructureFrame {
+    private static interface Frame {
 
-        private final EBMLType type;
-        private final LinkedList<DataFrame> children = new LinkedList<>();
+        int getSize();
 
-        public StructureFrame(EBMLType type) {
-            this.type = type;
+        void write(Output out) throws IOException;
+
+        static final class Structure implements Frame {
+
+            private final EBMLType type;
+            private final LinkedList<Frame> children = new LinkedList<>();
+
+            private int dataSize = -1;
+            private int fullSize = -1;
+
+            public Structure(EBMLType type) {
+                this.type = Objects.requireNonNull(type);
+            }
+
+            @Override
+            public int getSize() {
+                if (this.fullSize == -1) {
+                    return this.fullSize = getDataSize() + EBMLUtil.getCodeLength(BigInteger.valueOf(getDataSize()).toByteArray())
+                            + this.type.getEBMLCode().getSize();
+                }
+                return this.fullSize;
+            }
+
+            public int getDataSize() {
+                if (this.dataSize == -1) {
+                    this.dataSize = 0;
+                    for (Frame frame : this.children) {
+                        this.dataSize += frame.getSize();
+                    }
+                }
+                return this.dataSize;
+            }
+
+            @Override
+            public void write(Output out) throws IOException {
+                this.type.getEBMLCode().write(out);
+                EBMLUtil.writeUnsignedCode(out, BigInteger.valueOf(getDataSize()).toByteArray());
+                for (Frame frame : this.children) {
+                    frame.write(out);
+                }
+            }
+
         }
 
-    }
+        static class Format<O> implements Frame {
 
-    private static final class DataFrame {
+            private final EBMLWriteFormat.Writable writable;
 
-        private final byte[] buffer;
+            private int size = -1;
 
-        public DataFrame(byte[] buffer) {
-            this.buffer = buffer;
+            public Format(Writable writable) {
+                this.writable = writable;
+            }
+
+            @Override
+            public int getSize() {
+                if (this.size == -1) {
+                    this.size = this.writable.getSize();
+                }
+                return this.size;
+            }
+
+            @Override
+            public void write(Output out) throws IOException {
+                this.writable.writeFormat(out);
+            }
+
         }
-
     }
 
     private final Output out;
 
-    private final LinkedList<StructureFrame> frameStack = new LinkedList<>();
+    private final LinkedList<Frame.Structure> frameStack = new LinkedList<>();
 
     public EBMLWriter(Output out) {
         this.out = out;
@@ -65,90 +119,62 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
 
     @Override
     public void accept(Event<EBMLType> event) throws SparseWriterException {
-        EBMLType ebmlType = event.get();
+        EBMLType ebmlType = Objects.requireNonNull(event.get());
         if (CommonEventType.BEGIN.equals(event.getType())) {
-            if (frameStack.isEmpty() || frameStack.peek().type.getContext().getType(ebmlType.getEBMLCode()).equals(ebmlType)) {
-                this.begin(ebmlType);
-            } else {
-                throw new SparseWriterException("No type " + ebmlType + " found in context " + frameStack.peek().type.getContext());
-            }
+            openFrame(ebmlType);
         } else if (CommonEventType.END.equals(event.getType())) {
-            if (frameStack.isEmpty()) {
-                throw new SparseWriterException("Nothing to end");
-            } else if (frameStack.peek().type.equals(ebmlType)) {
-                this.end();
-            } else {
-                throw new SparseWriterException("Can't close " + ebmlType + " before " + frameStack.peek().type);
+            Frame.Structure frame = closeFrame(ebmlType);
+            if (null != frame) {
+                try {
+                    frame.write(this.out);
+                } catch (IOException e) {
+                    throw new SparseWriterException(e);
+                }
             }
         } else {
             throw new SparseWriterException("Unknown event type " + event.getType());
         }
     }
 
-    protected void begin(EBMLType t) throws SparseWriterException {
-        frameStack.push(new StructureFrame(t));
+    private void openFrame(EBMLType ebmlType) throws SparseWriterException {
+        Frame.Structure headFrame = this.frameStack.peek();
+        if (headFrame != null && !headFrame.type.getContext().contains(ebmlType)) {
+            throw new SparseWriterException("No type " + ebmlType + " found in context " + headFrame.type.getContext());
+        }
+        this.frameStack.push(new Frame.Structure(ebmlType));
     }
 
-    protected void end() throws SparseWriterException {
-        StructureFrame sFrame = frameStack.poll();
-        if (null == sFrame) {
-            throw new SparseWriterException("No frames left for write");
-        }
-        DataFrame dFrame = convertFrame(sFrame);
-        if (null == dFrame) {
-            throw new SparseWriterException("No frame to write");
-        }
-        if (!frameStack.isEmpty()) {
-            frameStack.peek().children.add(dFrame);
+    private <O> void openFrame(EBMLWriteFormat<O> format, O data) throws SparseWriterException {
+        Frame.Structure headFrame = this.frameStack.peek();
+        if (headFrame == null) {
+            try {
+                format.getWritable(data).writeFormat(this.out);
+            } catch (IOException e) {
+                throw new SparseWriterException(e);
+            }
+        } else if (headFrame.children.isEmpty()) {
+            headFrame.children.add(new Frame.Format<O>(format.getWritable(data)));
         } else {
-            writeFrame(out, dFrame);
+            throw new SparseWriterException("Dirty Structure frame " + headFrame);
         }
     }
 
-    private static DataFrame convertFrame(StructureFrame sFrame) {
-        int dataLength = 0;
-        for (DataFrame dFrame : sFrame.children) {
-            dataLength += dFrame.buffer.length;
-        }
-        byte[] codedDataLength = IntegerFormat.INSTANCE.writeFormat(dataLength);
-        int fullLength = dataLength + codedDataLength.length + sFrame.type.getEBMLCode().getSize();
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(fullLength)) {
-            Output dataOut = new Output() {
-
-                @Override
-                public void writeByte(byte b) throws IOException {
-                    baos.write(b);
+    private Frame.Structure closeFrame(EBMLType ebmlType) {
+        Iterator<Frame.Structure> it = frameStack.iterator();
+        while (it.hasNext()) {
+            Frame.Structure headFrame = it.next();
+            if (headFrame.type.equals(ebmlType)) {
+                it.remove();
+                if (it.hasNext()) {
+                    it.next().children.add(headFrame);
+                    return null;
                 }
-
-                @Override
-                public boolean isFinished() {
-                    return false;
-                }
-
-            };
-            sFrame.type.getEBMLCode().write(dataOut);
-            EBMLUtil.writeUnsignedCode(dataOut, codedDataLength);
-            for (DataFrame dFrame : sFrame.children) {
-                writeFrame(dataOut, dFrame);
+                return headFrame;
+            } else {
+                throw new SparseWriterException("Can't close " + ebmlType + " before " + headFrame.type);
             }
-            return new DataFrame(baos.toByteArray());
-        } catch (IOException e) {
-            throw new SparseWriterException(e);
         }
-    }
-
-    private static void writeFrame(Output out, DataFrame dFrame) {
-        try {
-            byte[] data = dFrame.buffer;
-            for (int i = 0; i < data.length; i++) {
-                if (out.isFinished()) {
-                    throw new EOFException();
-                }
-                out.writeByte(data[i]);
-            }
-        } catch (IOException e) {
-            throw new SparseWriterException(e);
-        }
+        throw new SparseWriterException("Nothing to end");
     }
 
     public boolean isEmpty() {
@@ -158,17 +184,20 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
     public static abstract interface EBMLWriteFormat<O> extends WriteFormat<EBMLType, EBMLWriter, O> {
 
         @Override
-        default void write(EBMLWriter w, O o) throws SparseWriterException {
-            DataFrame dFrame = new DataFrame(writeFormat(o));
-            StructureFrame sFrame = w.frameStack.peek();
-            if (null == sFrame) {
-                writeFrame(w.out, dFrame);
-            } else {
-                sFrame.children.push(dFrame);
-            }
+        default void write(EBMLWriter w, O data) throws SparseWriterException {
+            w.openFrame(this, data);
         }
 
-        public abstract byte[] writeFormat(O data);
+        Writable getWritable(O data);
+
+        interface Writable {
+
+            void writeFormat(Output out) throws IOException;
+
+            int getSize();
+
+        }
+
     }
 
 }

@@ -39,15 +39,12 @@ public class IntegerFormat implements EBMLFormat<Integer> {
     }
 
     @Override
-    public byte[] writeFormat(Integer data) {
-        if (null == data || data == 0) {
-            return EMPTY_BYTE_ARRAY;
-        }
-        return BigInteger.valueOf(data).toByteArray();
+    public String toString() {
+        return getClass().getSimpleName();
     }
 
     @Override
-    public String toString() {
-        return getClass().getSimpleName();
+    public Writable getWritable(Integer data) {
+        return LongFormat.INSTANCE.getWritable((long) data);
     }
 }

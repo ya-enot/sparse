@@ -18,6 +18,9 @@
  */
 package one.utopic.sparse.ebml.format;
 
+import java.io.IOException;
+
+import one.utopic.abio.api.output.Output;
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
@@ -28,11 +31,6 @@ public class BytesFormat implements EBMLFormat<byte[]> {
     public static final BytesFormat INSTANCE = new BytesFormat();
 
     @Override
-    public byte[] writeFormat(byte[] data) {
-        return data;
-    }
-
-    @Override
     public byte[] readFormat(byte[] data) {
         return data;
     }
@@ -40,5 +38,24 @@ public class BytesFormat implements EBMLFormat<byte[]> {
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public Writable getWritable(byte[] data) {
+        return new Writable() {
+
+            @Override
+            public void writeFormat(Output out) throws IOException {
+                for (int i = 0; i < data.length; i++) {
+                    out.writeByte(data[i]);
+                }
+            }
+
+            @Override
+            public int getSize() {
+                return data.length;
+            }
+
+        };
     }
 }

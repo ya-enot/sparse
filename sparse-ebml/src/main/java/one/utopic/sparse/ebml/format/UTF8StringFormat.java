@@ -40,12 +40,12 @@ public class UTF8StringFormat implements EBMLFormat<String> {
     }
 
     @Override
-    public byte[] writeFormat(String data) {
-        return data.getBytes(CHARSET);
+    public String toString() {
+        return getClass().getSimpleName();
     }
 
     @Override
-    public String toString() {
-        return getClass().getSimpleName();
+    public Writable getWritable(String data) {
+        return BytesFormat.INSTANCE.getWritable(data.getBytes(CHARSET));
     }
 }

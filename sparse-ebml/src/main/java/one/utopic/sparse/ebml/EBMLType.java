@@ -27,6 +27,8 @@ public interface EBMLType {
     public static interface Context {
 
         EBMLType getType(EBMLCode code);
+        
+        boolean contains(EBMLType type);
 
     }
 
