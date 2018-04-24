@@ -56,13 +56,18 @@ public enum TestType implements EBMLType {
 
         @Override
         public EBMLType getType(EBMLCode code) {
-            return typeMap.computeIfAbsent(code, c -> null == parentContext ? null : parentContext.typeMap.get(c));
+            return this.typeMap.computeIfAbsent(code, c -> null == this.parentContext ? null : this.parentContext.typeMap.get(c));
         }
 
         private void register(TestType type) {
             if (typeMap.putIfAbsent(type.getEBMLCode(), type) != null) {
                 throw new IllegalArgumentException("EventType is already registered for " + type.getEBMLCode());
             }
+        }
+
+        @Override
+        public boolean contains(EBMLType type) {
+            return typeMap.containsValue(type) || (null != this.parentContext && this.parentContext.typeMap.containsValue(type));
         }
 
     }

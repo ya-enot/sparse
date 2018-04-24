@@ -40,12 +40,20 @@ public class DateFormat implements EBMLFormat<Date> {
 
     @Override
     public Date readFormat(byte[] data) {
-        return new Date(longFormat.readFormat(data) + UNIX_EPOCH_DELAY);
+        return dateFromLong(longFormat.readFormat(data));
     }
 
     @Override
-    public byte[] writeFormat(Date data) {
-        return longFormat.writeFormat(data.getTime() - UNIX_EPOCH_DELAY);
+    public Writable getWritable(Date data) {
+        return longFormat.getWritable(dateToLong(data));
+    }
+
+    private Date dateFromLong(Long date) {
+        return new Date(date + UNIX_EPOCH_DELAY);
+    }
+
+    private long dateToLong(Date data) {
+        return data.getTime() - UNIX_EPOCH_DELAY;
     }
 
     @Override

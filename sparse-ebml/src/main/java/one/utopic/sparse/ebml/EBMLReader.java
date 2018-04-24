@@ -65,6 +65,11 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
         public EBMLType getType(EBMLCode code) {
             return null;
         }
+
+        @Override
+        public boolean contains(EBMLType type) {
+            return false;
+        }
     };
 
     private final WrappedInput in;
@@ -100,6 +105,9 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
             } else {
                 type = typeStack.peek().getContext().getType(code);
             }
+            if (null == type) {
+                throw new SparseReaderException("Unknown " + code);
+            }
             Integer length = IntegerFormat.INSTANCE.readFormat(EBMLUtil.readUnsignedCode(in, true));
             advance();
             lengthStack.push(length);
@@ -114,15 +122,15 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
         ListIterator<Integer> li = lengthStack.listIterator();
         while (li.hasNext()) {
             int remain = li.next() - in.read;
-            if (remain < 0) {
-                throw new SparseReaderException("Frame boundary violation while reading " + remain);
-            } else if (remain == 0) {
+            if (remain > 0) {
+                li.set(remain);
+                continue;
+            } else if (0 == remain) {
                 pendingEvents.add(new EBMLEvent(typeStack.poll(), EBMLEvent.CommonEventType.END));
                 li.remove();
                 continue;
             } else {
-                li.set(remain);
-                break;
+                throw new SparseReaderException("Frame boundary violation while reading " + remain);
             }
         }
         in.read = 0;

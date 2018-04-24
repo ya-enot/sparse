@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
@@ -111,7 +112,7 @@ public final class EBMLFormatTest {
         String testString = UUID.randomUUID().toString();
         byte[] testStringBytes = testString.getBytes();
         Date testDate = new Date();
-        byte[] testDateBytes = LongFormat.INSTANCE.writeFormat(//
+        byte[] testDateBytes = formatLong(//
                 (testDate.getTime() - DateFormat.UNIX_EPOCH_DELAY));
         TEST_DATA = new TestData[] { //
                 TestData.of(BytesFormat.INSTANCE, testStringBytes, testStringBytes), //
@@ -128,16 +129,11 @@ public final class EBMLFormatTest {
                 TestData.of(LongFormat.INSTANCE, Long.MIN_VALUE, new byte[] { -128, 0, 0, 0, 0, 0, 0, 0 }), //
                 TestData.of(DateFormat.INSTANCE, testDate, testDateBytes), //
                 TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY), new byte[] {}), //
-                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + 1),
-                        LongFormat.INSTANCE.writeFormat(1L)), //
-                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY - 1),
-                        LongFormat.INSTANCE.writeFormat(-1L)), //
-                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + 1000),
-                        LongFormat.INSTANCE.writeFormat(1000L)), //
-                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + Long.MAX_VALUE),
-                        LongFormat.INSTANCE.writeFormat(Long.MAX_VALUE)), //
-                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + Long.MIN_VALUE),
-                        LongFormat.INSTANCE.writeFormat(Long.MIN_VALUE)), //
+                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + 1), formatLong(1L)), //
+                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY - 1), formatLong(-1L)), //
+                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + 1000), formatLong(1000L)), //
+                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + Long.MAX_VALUE), formatLong(Long.MAX_VALUE)), //
+                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + Long.MIN_VALUE), formatLong(Long.MIN_VALUE)), //
         };
     }
 
@@ -145,7 +141,15 @@ public final class EBMLFormatTest {
     @TestDataParam
     public <T> void formatUnformatTest(TestData<T> d) {
         assertGenericEquals(d.rawData, d.format.readFormat(d.formattedData));
-        assertArrayEquals(d.formattedData, d.format.writeFormat(d.rawData));
+        assertArrayEquals(d.formattedData, writeFormat(d.format, d.rawData));
+    }
+
+    private <T> byte[] writeFormat(EBMLFormat<T> format, T data) {
+        return encode(w -> format.write(w, data));
+    }
+
+    private static byte[] formatLong(long value) {
+        return BigInteger.valueOf(value).toByteArray();
     }
 
     @DisplayName("WriteReadTest")
