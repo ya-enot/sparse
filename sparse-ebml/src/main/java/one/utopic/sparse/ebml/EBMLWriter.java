@@ -32,10 +32,12 @@ import one.utopic.sparse.api.WriteFormat;
 import one.utopic.sparse.api.Writer;
 import one.utopic.sparse.api.exception.SparseWriterException;
 import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat.Writable;
+import one.utopic.sparse.ebml.EBMLWriter.Frame.Format;
+import one.utopic.sparse.ebml.EBMLWriter.Frame.Structure;
 
 public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
 
-    private static interface Frame {
+    protected static interface Frame {
 
         int getSize();
 
@@ -56,7 +58,7 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
             @Override
             public int getSize() {
                 if (this.fullSize == -1) {
-                    return this.fullSize = getDataSize() + EBMLUtil.getCodeLength(BigInteger.valueOf(getDataSize()).toByteArray())
+                    return this.fullSize = getDataSize() + EBMLFormatUtil.codeLength(BigInteger.valueOf(getDataSize()).toByteArray())
                             + this.type.getEBMLCode().getSize();
                 }
                 return this.fullSize;
@@ -75,7 +77,7 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
             @Override
             public void write(Output out) throws IOException {
                 this.type.getEBMLCode().write(out);
-                EBMLUtil.writeUnsignedCode(out, BigInteger.valueOf(getDataSize()).toByteArray());
+                EBMLFormatUtil.writeCode(out, BigInteger.valueOf(getDataSize()).toByteArray());
                 for (Frame frame : this.children) {
                     frame.write(out);
                 }
@@ -141,7 +143,7 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
         if (headFrame != null && !headFrame.type.getContext().contains(ebmlType)) {
             throw new SparseWriterException("No type " + ebmlType + " found in context " + headFrame.type.getContext());
         }
-        this.frameStack.push(new Frame.Structure(ebmlType));
+        this.frameStack.push(newStructureFrame(ebmlType));
     }
 
     private <O> void openFrame(EBMLWriteFormat<O> format, O data) throws SparseWriterException {
@@ -153,10 +155,18 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
                 throw new SparseWriterException(e);
             }
         } else if (headFrame.children.isEmpty()) {
-            headFrame.children.add(new Frame.Format<O>(format.getWritable(data)));
+            headFrame.children.add(newFormatFrame(format, data));
         } else {
             throw new SparseWriterException("Dirty Structure frame " + headFrame);
         }
+    }
+
+    protected <O> Format<O> newFormatFrame(EBMLWriteFormat<O> format, O data) {
+        return new Frame.Format<O>(format.getWritable(data));
+    }
+
+    protected Structure newStructureFrame(EBMLType ebmlType) {
+        return new Frame.Structure(ebmlType);
     }
 
     private Frame.Structure closeFrame(EBMLType ebmlType) {

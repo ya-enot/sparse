@@ -26,8 +26,22 @@ public interface EBMLType {
 
     public static interface Context {
 
+        public static final Context EMPTY = new Context() {
+
+            @Override
+            public EBMLType getType(EBMLCode code) {
+                return null;
+            }
+
+            @Override
+            public boolean contains(EBMLType type) {
+                return false;
+            }
+
+        };
+
         EBMLType getType(EBMLCode code);
-        
+
         boolean contains(EBMLType type);
 
     }

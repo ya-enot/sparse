@@ -43,7 +43,7 @@ public final class EBMLCode {
     private final byte[] code;
 
     public EBMLCode(byte[] code) {
-        if (!EBMLUtil.isCodeValid(code)) {
+        if (!EBMLFormatUtil.isCodeValid(code)) {
             throw new IllegalArgumentException("EBMLCode [" + DatatypeConverter.printHexBinary(code) + "] is not a valid EBML coded data");
         }
         this.code = code;
@@ -53,7 +53,7 @@ public final class EBMLCode {
         return code.length;
     }
 
-    void write(Output out) throws IOException {
+    public void write(Output out) throws IOException {
         for (int i = 0; i < code.length; i++) {
             out.writeByte(code[i]);
         }

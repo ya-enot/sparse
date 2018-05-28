@@ -19,5 +19,5 @@
 package one.utopic.sparse.ebml;
 
 public interface EBMLFormat<O> extends EBMLReader.EBMLReadFormat<O>, EBMLWriter.EBMLWriteFormat<O> {
-    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+    static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 }

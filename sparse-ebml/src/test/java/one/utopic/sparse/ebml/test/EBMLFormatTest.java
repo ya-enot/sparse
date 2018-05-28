@@ -47,6 +47,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import one.utopic.sparse.ebml.EBMLFormat;
 import one.utopic.sparse.ebml.EBMLReader;
+import one.utopic.sparse.ebml.EBMLType;
 import one.utopic.sparse.ebml.EBMLWriter;
 import one.utopic.sparse.ebml.format.BytesFormat;
 import one.utopic.sparse.ebml.format.DateFormat;
@@ -158,7 +159,7 @@ public final class EBMLFormatTest {
         assertArrayEquals(d.formattedData, encode(w -> {
             d.format.write(w, d.rawData);
         }));
-        decode(d.formattedData, EBMLReader.EMPTY_CONTEXT, r -> {
+        decode(d.formattedData, EBMLType.Context.EMPTY, r -> {
             T read = d.format.read(r);
             if (null != read && read.getClass().isArray()) {
                 assertGenericEquals(d.rawData, read);
