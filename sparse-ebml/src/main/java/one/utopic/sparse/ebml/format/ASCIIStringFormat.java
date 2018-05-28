@@ -18,15 +18,26 @@
  */
 package one.utopic.sparse.ebml.format;
 
+import java.nio.charset.Charset;
+
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
- * Acts like a BigInteger.intValue(), except that zero length byte array results
- * in 0
+ * Writes and reads UTF8 string data
  */
-public class IntegerFormat implements EBMLFormat<Integer> {
+public class ASCIIStringFormat implements EBMLFormat<String> {
 
-    public static final IntegerFormat INSTANCE = new IntegerFormat();
+    public static final ASCIIStringFormat INSTANCE = new ASCIIStringFormat();
+
+    private static final Charset CHARSET = Charset.forName("ASCII");
+
+    @Override
+    public String readFormat(byte[] data) {
+        if (data.length < 1) {
+            return "";
+        }
+        return new String(data, CHARSET);
+    }
 
     @Override
     public String toString() {
@@ -34,12 +45,7 @@ public class IntegerFormat implements EBMLFormat<Integer> {
     }
 
     @Override
-    public Integer readFormat(byte[] data) {
-        return LongFormat.INSTANCE.readFormat(data).intValue();
-    }
-
-    @Override
-    public Writable getWritable(Integer data) {
-        return LongFormat.INSTANCE.getWritable((long) data);
+    public Writable getWritable(String data) {
+        return BytesFormat.INSTANCE.getWritable(data.getBytes(CHARSET));
     }
 }
