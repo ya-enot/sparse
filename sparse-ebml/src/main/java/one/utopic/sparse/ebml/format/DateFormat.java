@@ -18,6 +18,7 @@
  */
 package one.utopic.sparse.ebml.format;
 
+import java.math.BigInteger;
 import java.util.Date;
 
 import one.utopic.sparse.ebml.EBMLFormat;
@@ -28,24 +29,24 @@ import one.utopic.sparse.ebml.EBMLFormat;
  */
 public class DateFormat implements EBMLFormat<Date> {
 
-    public static final DateFormat INSTANCE = new DateFormat(LongFormat.INSTANCE);
+    public static final DateFormat INSTANCE = new DateFormat(BigIntegerFormat.INSTANCE);
 
     public static final long UNIX_EPOCH_DELAY = 978307200000L; // milliseconds from 2001/01/01 00:00:00.000 UTC
 
-    private final LongFormat longFormat;
+    private final BigIntegerFormat bigintFormat;
 
-    public DateFormat(LongFormat longFormat) {
-        this.longFormat = longFormat;
+    public DateFormat(BigIntegerFormat bigintFormat) {
+        this.bigintFormat = bigintFormat;
     }
 
     @Override
     public Date readFormat(byte[] data) {
-        return dateFromLong(longFormat.readFormat(data));
+        return dateFromLong(bigintFormat.readFormat(data).longValueExact());
     }
 
     @Override
     public Writable getWritable(Date data) {
-        return longFormat.getWritable(dateToLong(data));
+        return bigintFormat.getWritable(BigInteger.valueOf(dateToLong(data)));
     }
 
     private Date dateFromLong(Long date) {

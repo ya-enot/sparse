@@ -33,7 +33,7 @@ import one.utopic.sparse.api.ReadFormat;
 import one.utopic.sparse.api.Reader;
 import one.utopic.sparse.api.exception.SparseReaderException;
 import one.utopic.sparse.ebml.EBMLType.Context;
-import one.utopic.sparse.ebml.format.IntegerFormat;
+import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
 public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
 
@@ -72,17 +72,23 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
     }
 
     @Override
-    public boolean hasNext() throws SparseReaderException {
+    public boolean hasNext() {
         return !in.isFinished() || !pendingEvents.isEmpty();
     }
 
     @Override
-    public EBMLEvent next() {
+    public EBMLEvent next() throws SparseReaderException {
         if (!pendingEvents.isEmpty()) {
             return pendingEvents.poll();
         }
         try {
-            EBMLCode code = new EBMLCode(EBMLFormatUtil.readCode(in, false));
+            EBMLCode code;
+            try {
+                code = new EBMLCode(EBMLFormatUtil.readCode(in, false));
+            } catch (Exception e) {
+                throw new IllegalStateException("EBML code reading error: " + e.getMessage(), e);
+            }
+
             EBMLType type;
             if (typeStack.isEmpty()) {
                 type = rootTypeContext.getType(code);
@@ -90,24 +96,31 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
                 type = typeStack.peek().getContext().getType(code);
             }
             type = resolveTypeCode(type, code);
-            Integer length = IntegerFormat.INSTANCE.readFormat(EBMLFormatUtil.readCode(in, true));
+
+            int length;
+            try {
+                length = BigIntegerFormat.INSTANCE.readFormat(EBMLFormatUtil.readCode(in, true)).intValueExact();
+            } catch (Exception e) {
+                throw new IllegalStateException("EBML length reading error: " + e.getMessage(), e);
+            }
+
             advance();
             lengthStack.push(length);
             typeStack.push(type);
             return new EBMLEvent(type, EBMLEvent.CommonEventType.BEGIN);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new SparseReaderException(e);
         }
     }
 
     protected EBMLType resolveTypeCode(EBMLType type, EBMLCode code) throws SparseReaderException {
         if (null == type) {
-            throw new SparseReaderException("Unknown " + code);
+            throw new SparseReaderException("Unknown EBML code: " + code);
         }
         return type;
     }
 
-    private void advance() {
+    private void advance() throws SparseReaderException {
         ListIterator<Integer> li = lengthStack.listIterator();
         while (li.hasNext()) {
             int remain = li.next() - in.read;
@@ -128,7 +141,7 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
     public static abstract interface EBMLReadFormat<O> extends ReadFormat<EBMLType, EBMLReader, O> {
 
         @Override
-        default O read(EBMLReader reader) {
+        default O read(EBMLReader reader) throws SparseReaderException {
             return reader.read(this);
         }
 
@@ -136,11 +149,11 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
     }
 
     @Override
-    public Event<EBMLType> get() {
+    public Event<EBMLType> get() throws SparseReaderException {
         return hasNext() ? next() : null;
     }
 
-    protected <O> O read(EBMLReadFormat<O> ebmlReadFormat) {
+    protected <O> O read(EBMLReadFormat<O> ebmlReadFormat) throws SparseReaderException {
         if (lengthStack.isEmpty()) {
             return readVarLen(ebmlReadFormat);
         }
@@ -153,19 +166,19 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
             int read = in.read;
             advance();
             return read == length ? ebmlReadFormat.readFormat(data) : ebmlReadFormat.readFormat(Arrays.copyOf(data, read));
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new SparseReaderException(e);
         }
     }
 
-    protected <O> O readVarLen(EBMLReadFormat<O> ebmlReadFormat) {
+    protected <O> O readVarLen(EBMLReadFormat<O> ebmlReadFormat) throws SparseReaderException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             while (!in.isFinished()) {
                 baos.write(in.readByte());
             }
             advance();
             return ebmlReadFormat.readFormat(baos.toByteArray());
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new SparseReaderException(e);
         }
     }

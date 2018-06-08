@@ -18,16 +18,16 @@
  */
 package one.utopic.sparse.ebml.format;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
- * Writes and reads Integer numbers
+ * Acts like a BigDecimalFormat but value and scale are limited to Float type
  */
-public class BigIntegerFormat implements EBMLFormat<BigInteger> {
+public class FloatFormat implements EBMLFormat<Float> {
 
-    public static final BigIntegerFormat INSTANCE = new BigIntegerFormat();
+    public static final FloatFormat INSTANCE = new FloatFormat();
 
     @Override
     public String toString() {
@@ -35,15 +35,12 @@ public class BigIntegerFormat implements EBMLFormat<BigInteger> {
     }
 
     @Override
-    public BigInteger readFormat(byte[] data) {
-        if (data.length < 1) {
-            return BigInteger.ZERO;
-        }
-        return new BigInteger(data);
+    public Float readFormat(byte[] data) {
+        return BigDecimalFormat.INSTANCE.readFormat(data).floatValue();
     }
 
     @Override
-    public Writable getWritable(BigInteger data) {
-        return BytesFormat.INSTANCE.getWritable(data.toByteArray());
+    public Writable getWritable(Float data) {
+        return BigDecimalFormat.INSTANCE.getWritable(BigDecimal.valueOf(data));
     }
 }
