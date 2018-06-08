@@ -19,6 +19,7 @@
 package one.utopic.sparse.ebml.format;
 
 import static one.utopic.sparse.ebml.EBMLFormatUtil.codeLength;
+import static one.utopic.sparse.ebml.EBMLFormatUtil.readCode;
 import static one.utopic.sparse.ebml.EBMLFormatUtil.readCodeStrip;
 import static one.utopic.sparse.ebml.EBMLFormatUtil.writeCode;
 
@@ -32,7 +33,7 @@ import one.utopic.sparse.api.exception.SparseReaderException;
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
- * Acts like a BigDecimal, except that zero length byte array results in 0
+ * Writes and reads Decimal numbers with scale
  */
 public class BigDecimalFormat implements EBMLFormat<BigDecimal> {
 
@@ -43,6 +44,44 @@ public class BigDecimalFormat implements EBMLFormat<BigDecimal> {
         return getClass().getSimpleName();
     }
 
+    public BigDecimal readFormat2(byte[] data) {
+        if (data.length < 1) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            byte[] scaleRawLength = readCode(data);
+            int scaleLength = new BigInteger(readCodeStrip(scaleRawLength)).intValue();
+            int scale = new BigInteger(Arrays.copyOfRange(data, scaleRawLength.length, scaleRawLength.length + scaleLength)).intValue();
+            BigInteger value = new BigInteger(Arrays.copyOfRange(data, scaleRawLength.length + scaleLength, data.length));
+            return new BigDecimal(value, scale);
+        } catch (IOException e) {
+            throw new SparseReaderException(e);
+        }
+    }
+
+    public Writable getWritable2(BigDecimal data) {
+        byte[] scaleRaw = BigInteger.valueOf(data.scale()).toByteArray();
+        byte[] valueRaw = data.unscaledValue().toByteArray();
+        return new Writable() {
+            @Override
+            public void writeFormat(Output out) throws IOException {
+                writeCode(out, BigInteger.valueOf(scaleRaw.length).toByteArray());
+                for (int i = 0; !out.isFinished() && i < scaleRaw.length; i++) {
+                    out.writeByte(scaleRaw[i]);
+                }
+                for (int i = 0; !out.isFinished() && i < valueRaw.length; i++) {
+                    out.writeByte(valueRaw[i]);
+                }
+            }
+
+            @Override
+            public int getSize() {
+                return codeLength(scaleRaw) + valueRaw.length;
+            }
+
+        };
+    }
+
     @Override
     public BigDecimal readFormat(byte[] data) {
         if (data.length < 1) {
@@ -50,9 +89,10 @@ public class BigDecimalFormat implements EBMLFormat<BigDecimal> {
         }
         try {
             byte[] scaleRaw = readCodeStrip(data);
-            int length = codeLength(scaleRaw);
-            BigInteger value = new BigInteger(Arrays.copyOfRange(data, length, data.length));
-            return new BigDecimal(value, new BigInteger(scaleRaw).intValue());
+            long scale = new BigInteger(scaleRaw).longValueExact();
+            scale = (1 & scale) == 0 ? scale >> 1 : -scale >> 1; // scale sign unpacking
+            BigInteger value = new BigInteger(Arrays.copyOfRange(data, codeLength(scaleRaw), data.length));
+            return new BigDecimal(value, (int) scale);
         } catch (IOException e) {
             throw new SparseReaderException(e);
         }
@@ -60,7 +100,9 @@ public class BigDecimalFormat implements EBMLFormat<BigDecimal> {
 
     @Override
     public Writable getWritable(BigDecimal data) {
-        byte[] scaleRaw = BigInteger.valueOf(data.scale()).toByteArray();
+        long scale = data.scale();
+        scale = scale >= 0 ? scale << 1 : -(scale << 1 | 1); // scale sign packing
+        byte[] scaleRaw = BigInteger.valueOf(scale).toByteArray();
         byte[] valueRaw = data.unscaledValue().toByteArray();
         return new Writable() {
 

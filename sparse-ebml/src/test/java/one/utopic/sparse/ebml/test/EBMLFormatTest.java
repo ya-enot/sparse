@@ -30,9 +30,11 @@ import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -49,8 +51,13 @@ import one.utopic.sparse.ebml.EBMLFormat;
 import one.utopic.sparse.ebml.EBMLReader;
 import one.utopic.sparse.ebml.EBMLType;
 import one.utopic.sparse.ebml.EBMLWriter;
+import one.utopic.sparse.ebml.format.ASCIIStringFormat;
+import one.utopic.sparse.ebml.format.BigDecimalFormat;
+import one.utopic.sparse.ebml.format.BigIntegerFormat;
 import one.utopic.sparse.ebml.format.BytesFormat;
 import one.utopic.sparse.ebml.format.DateFormat;
+import one.utopic.sparse.ebml.format.DoubleFormat;
+import one.utopic.sparse.ebml.format.FloatFormat;
 import one.utopic.sparse.ebml.format.IntegerFormat;
 import one.utopic.sparse.ebml.format.LongFormat;
 import one.utopic.sparse.ebml.format.UTF8StringFormat;
@@ -115,26 +122,79 @@ public final class EBMLFormatTest {
         Date testDate = new Date();
         byte[] testDateBytes = formatLong(//
                 (testDate.getTime() - DateFormat.UNIX_EPOCH_DELAY));
+        String testUTF8String = "Привет мир";
+        byte[] testUTF8StringBytes = testUTF8String.getBytes(Charset.forName("UTF8"));
         TEST_DATA = new TestData[] { //
+
                 TestData.of(BytesFormat.INSTANCE, testStringBytes, testStringBytes), //
-                TestData.of(UTF8StringFormat.INSTANCE, testString, testStringBytes), //
-                TestData.of(IntegerFormat.INSTANCE, 0, new byte[] {}), //
+
+                TestData.of(ASCIIStringFormat.INSTANCE, testString, testStringBytes), //
+
+                TestData.of(UTF8StringFormat.INSTANCE, testUTF8String, testUTF8StringBytes), //
+
+                TestData.of(IntegerFormat.INSTANCE, 0, new byte[] { 0 }), //
                 TestData.of(IntegerFormat.INSTANCE, 1, new byte[] { 1 }), //
                 TestData.of(IntegerFormat.INSTANCE, -1, new byte[] { -1 }), //
                 TestData.of(IntegerFormat.INSTANCE, Integer.MAX_VALUE, new byte[] { 127, -1, -1, -1 }), //
                 TestData.of(IntegerFormat.INSTANCE, Integer.MIN_VALUE, new byte[] { -128, 0, 0, 0 }), //
-                TestData.of(LongFormat.INSTANCE, 0L, new byte[] {}), //
+
+                TestData.of(LongFormat.INSTANCE, 0L, new byte[] { 0 }), //
                 TestData.of(LongFormat.INSTANCE, 1L, new byte[] { 1 }), //
                 TestData.of(LongFormat.INSTANCE, -1L, new byte[] { -1 }), //
                 TestData.of(LongFormat.INSTANCE, Long.MAX_VALUE, new byte[] { 127, -1, -1, -1, -1, -1, -1, -1 }), //
                 TestData.of(LongFormat.INSTANCE, Long.MIN_VALUE, new byte[] { -128, 0, 0, 0, 0, 0, 0, 0 }), //
+
+                TestData.of(FloatFormat.INSTANCE, 0.0f, new byte[] { -126, 0 }), //
+                TestData.of(FloatFormat.INSTANCE, 0.1f, new byte[] { -94, 35, -122, -14, 120, -94, -68, -100 }), //
+                TestData.of(FloatFormat.INSTANCE, -0.1f, new byte[] { -94, -36, 121, 13, -121, 93, 67, 100 }), //
+                TestData.of(FloatFormat.INSTANCE, 1.0f, new byte[] { -126, 10 }), //
+                TestData.of(FloatFormat.INSTANCE, -1.0f, new byte[] { -126, -10 }), //
+                TestData.of(FloatFormat.INSTANCE, 1.1f, new byte[] { -98, 3, -24, 113, -74, -84, -116, 66 }), //
+                TestData.of(FloatFormat.INSTANCE, -1.1f, new byte[] { -98, -4, 23, -114, 73, 83, 115, -66 }), //
+                TestData.of(FloatFormat.INSTANCE, Float.MAX_VALUE, new byte[] { -85, 120, -28, 127, -57, 120, -5, 86 }), //
+                TestData.of(FloatFormat.INSTANCE, Float.MIN_VALUE, new byte[] { -8, 4, -6, 121, 57, 48, -68, -47 }), //
+
+                TestData.of(DoubleFormat.INSTANCE, 0.0d, new byte[] { -126, 0 }), //
+                TestData.of(DoubleFormat.INSTANCE, 0.1d, new byte[] { -126, 1 }), //
+                TestData.of(DoubleFormat.INSTANCE, -0.1d, new byte[] { -126, -1 }), //
+                TestData.of(DoubleFormat.INSTANCE, 1.0d, new byte[] { -126, 10 }), //
+                TestData.of(DoubleFormat.INSTANCE, -1.0d, new byte[] { -126, -10 }), //
+                TestData.of(DoubleFormat.INSTANCE, 1.1d, new byte[] { -126, 11 }), //
+                TestData.of(DoubleFormat.INSTANCE, -1.1d, new byte[] { -126, -11 }), //
+                TestData.of(DoubleFormat.INSTANCE, Double.MAX_VALUE, new byte[] { 66, 71, 63, -35, -20, 127, 47, -81, 53 }), //
+                TestData.of(DoubleFormat.INSTANCE, Double.MIN_VALUE, new byte[] { 66, -118, 49 }), //
+
                 TestData.of(DateFormat.INSTANCE, testDate, testDateBytes), //
-                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY), new byte[] {}), //
+                TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY), new byte[] { 0 }), //
                 TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + 1), formatLong(1L)), //
                 TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY - 1), formatLong(-1L)), //
                 TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + 1000), formatLong(1000L)), //
                 TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + Long.MAX_VALUE), formatLong(Long.MAX_VALUE)), //
                 TestData.of(DateFormat.INSTANCE, new Date(DateFormat.UNIX_EPOCH_DELAY + Long.MIN_VALUE), formatLong(Long.MIN_VALUE)), //
+
+                TestData.of(BigIntegerFormat.INSTANCE, BigInteger.valueOf(0), new byte[] { 0 }), //
+                TestData.of(BigIntegerFormat.INSTANCE, BigInteger.valueOf(1), new byte[] { 1 }), //
+                TestData.of(BigIntegerFormat.INSTANCE, BigInteger.valueOf(-1), new byte[] { -1 }), //
+                TestData.of(BigIntegerFormat.INSTANCE, BigInteger.valueOf(Long.MAX_VALUE).pow(3),
+                        new byte[] { 31, -1, -1, -1, -1, -1, -1, -1, 64, 0, 0, 0, 0, 0, 0, 1, 127, -1, -1, -1, -1, -1, -1, -1 }), //
+                TestData.of(BigIntegerFormat.INSTANCE, BigInteger.valueOf(Long.MIN_VALUE).pow(3),
+                        new byte[] { -32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }), //
+
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(0), new byte[] { -128, 0 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(1), new byte[] { -128, 1 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(-1), new byte[] { -128, -1 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(Double.MAX_VALUE).pow(3),
+                        new byte[] { 70, -41, 3, -7, -97, -66, 34, 38, -43, 37, 5, 10, -34, -2, 100, 71, -55, -103, 67, 16, -90, -22,
+                                -115 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(Double.MIN_VALUE).pow(3), new byte[] { 71, -98, 1, -53, -111 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(1, 1000000000), new byte[] { 8, 119, 53, -108, 0, 1 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(1000000000, 1), new byte[] { -126, 59, -102, -54, 0 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(-1, 1000000000), new byte[] { 8, 119, 53, -108, 0, -1 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(-1000000000, 1), new byte[] { -126, -60, 101, 54, 0 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(1, -1000000000), new byte[] { 8, 119, 53, -109, -1, 1 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(1000000000, -1), new byte[] { -127, 59, -102, -54, 0 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(-1, -1000000000), new byte[] { 8, 119, 53, -109, -1, -1 }), //
+                TestData.of(BigDecimalFormat.INSTANCE, BigDecimal.valueOf(-1000000000, -1), new byte[] { -127, -60, 101, 54, 0 }), //
         };
     }
 

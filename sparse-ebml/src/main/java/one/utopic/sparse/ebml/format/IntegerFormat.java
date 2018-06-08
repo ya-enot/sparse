@@ -18,11 +18,12 @@
  */
 package one.utopic.sparse.ebml.format;
 
+import java.math.BigInteger;
+
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
- * Acts like a BigInteger.intValue(), except that zero length byte array results
- * in 0
+ * Acts like a BigIntegerFormat but value and scale are limited to Integer type
  */
 public class IntegerFormat implements EBMLFormat<Integer> {
 
@@ -35,11 +36,11 @@ public class IntegerFormat implements EBMLFormat<Integer> {
 
     @Override
     public Integer readFormat(byte[] data) {
-        return LongFormat.INSTANCE.readFormat(data).intValue();
+        return BigIntegerFormat.INSTANCE.readFormat(data).intValueExact();
     }
 
     @Override
     public Writable getWritable(Integer data) {
-        return LongFormat.INSTANCE.getWritable((long) data);
+        return BigIntegerFormat.INSTANCE.getWritable(BigInteger.valueOf(data));
     }
 }

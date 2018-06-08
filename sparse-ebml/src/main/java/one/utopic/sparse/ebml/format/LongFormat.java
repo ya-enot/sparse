@@ -18,27 +18,16 @@
  */
 package one.utopic.sparse.ebml.format;
 
-import java.io.IOException;
 import java.math.BigInteger;
 
-import one.utopic.abio.api.output.Output;
 import one.utopic.sparse.ebml.EBMLFormat;
 
 /**
- * Acts like a BigInteger.longValue(), except that zero length byte array
- * results in 0
+ * Acts like a BigIntegerFormat but value and scale are limited to Long type
  */
 public class LongFormat implements EBMLFormat<Long> {
 
     public static final LongFormat INSTANCE = new LongFormat();
-
-    @Override
-    public Long readFormat(byte[] data) {
-        if (data.length < 1) {
-            return 0L;
-        }
-        return new BigInteger(data).longValue();
-    }
 
     @Override
     public String toString() {
@@ -46,23 +35,12 @@ public class LongFormat implements EBMLFormat<Long> {
     }
 
     @Override
-    public Writable getWritable(Long data) {
-        return new Writable() {
-            @Override
-            public void writeFormat(Output out) throws IOException {
-                if (data == 0) {
-                    return;
-                }
-                byte[] bytes = BigInteger.valueOf(data).toByteArray();
-                for (int i = 0; i < bytes.length; i++) {
-                    out.writeByte(bytes[i]);
-                }
-            }
+    public Long readFormat(byte[] data) {
+        return BigIntegerFormat.INSTANCE.readFormat(data).longValueExact();
+    }
 
-            @Override
-            public int getSize() {
-                return data == 0 ? 0 : 1 + ((Long.SIZE - Long.numberOfLeadingZeros(data < 0 ? -1 ^ data : data)) / Byte.SIZE);
-            }
-        };
+    @Override
+    public Writable getWritable(Long data) {
+        return BigIntegerFormat.INSTANCE.getWritable(BigInteger.valueOf(data));
     }
 }
