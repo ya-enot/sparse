@@ -90,4 +90,8 @@ public final class EBMLCode {
         return "EBMLCode [" + DatatypeConverter.printHexBinary(this.code) + "]";
     }
 
+    public String toHexString() {
+        return DatatypeConverter.printHexBinary(this.code);
+    }
+
 }
