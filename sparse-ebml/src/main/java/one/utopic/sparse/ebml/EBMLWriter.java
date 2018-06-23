@@ -85,7 +85,7 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
 
         }
 
-        static class Format<O> implements Frame {
+        static class Format implements Frame {
 
             private final EBMLWriteFormat.Writable writable;
 
@@ -146,23 +146,23 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
         this.frameStack.push(newStructureFrame(ebmlType));
     }
 
-    private <O> void openFrame(EBMLWriteFormat<O> format, O data) throws SparseWriterException {
+    private <O> void openFrame(EBMLWriteFormat.Writable w) throws SparseWriterException {
         Frame.Structure headFrame = this.frameStack.peek();
         if (headFrame == null) {
             try {
-                format.getWritable(data).writeFormat(this.out);
+                w.writeFormat(this.out);
             } catch (IOException e) {
                 throw new SparseWriterException(e);
             }
         } else if (headFrame.children.isEmpty()) {
-            headFrame.children.add(newFormatFrame(format, data));
+            headFrame.children.add(newFormatFrame(w));
         } else {
             throw new SparseWriterException("Dirty Structure frame " + headFrame);
         }
     }
 
-    protected <O> Format<O> newFormatFrame(EBMLWriteFormat<O> format, O data) {
-        return new Frame.Format<O>(format.getWritable(data));
+    protected Format newFormatFrame(EBMLWriteFormat.Writable w) {
+        return new Frame.Format(w);
     }
 
     protected Structure newStructureFrame(EBMLType ebmlType) {
@@ -195,7 +195,7 @@ public class EBMLWriter implements Writer<EBMLType>, Consumer<Event<EBMLType>> {
 
         @Override
         default void write(EBMLWriter w, O data) throws SparseWriterException {
-            w.openFrame(this, data);
+            w.openFrame(this.getWritable(data));
         }
 
         Writable getWritable(O data);
