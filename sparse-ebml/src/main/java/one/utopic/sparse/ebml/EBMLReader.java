@@ -73,11 +73,12 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
 
     @Override
     public boolean hasNext() {
-        return !in.isFinished() || !pendingEvents.isEmpty();
+        return !in.isFinished() || !typeStack.isEmpty() || !pendingEvents.isEmpty();
     }
 
     @Override
     public EBMLEvent next() throws SparseReaderException {
+        advanceEnd();
         if (!pendingEvents.isEmpty()) {
             return pendingEvents.poll();
         }
@@ -120,13 +121,12 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
         return type;
     }
 
-    private void advance() throws SparseReaderException {
+    private void advanceEnd() throws SparseReaderException {
         ListIterator<Integer> li = lengthStack.listIterator();
         while (li.hasNext()) {
-            int remain = li.next() - in.read;
+            int remain = li.next();
             if (remain > 0) {
-                li.set(remain);
-                continue;
+                break;
             } else if (0 == remain) {
                 pendingEvents.add(new EBMLEvent(typeStack.poll(), EBMLEvent.CommonEventType.END));
                 li.remove();
@@ -134,6 +134,13 @@ public class EBMLReader implements Reader<EBMLType>, Supplier<Event<EBMLType>> {
             } else {
                 throw new SparseReaderException("Frame boundary violation while reading " + remain);
             }
+        }
+    }
+
+    private void advance() throws SparseReaderException {
+        ListIterator<Integer> li = lengthStack.listIterator();
+        while (li.hasNext()) {
+            li.set(li.next() - in.read);
         }
         in.read = 0;
     }
