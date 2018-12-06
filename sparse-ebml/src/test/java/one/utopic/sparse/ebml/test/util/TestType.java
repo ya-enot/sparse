@@ -70,6 +70,11 @@ public enum TestType implements EBMLType {
             return typeMap.containsValue(type) || (null != this.parentContext && this.parentContext.typeMap.containsValue(type));
         }
 
+        @Override
+        public boolean is(EBMLType.Context context) {
+            return equals(context) || parentContext.is(context);
+        }
+
     }
 
     private final Context context;
