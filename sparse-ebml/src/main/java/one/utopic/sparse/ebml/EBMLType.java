@@ -38,11 +38,18 @@ public interface EBMLType {
                 return false;
             }
 
+            @Override
+            public boolean is(Context context) {
+                return equals(context);
+            }
+
         };
 
         EBMLType getType(EBMLCode code);
 
         boolean contains(EBMLType type);
+
+        boolean is(Context context);
 
     }
 
