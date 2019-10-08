@@ -22,13 +22,22 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import javax.xml.bind.DatatypeConverter;
-
 import one.utopic.abio.api.output.Output;
 
 public final class EBMLCode {
 
     private static final HashMap<EBMLCode, EBMLCode> internalCache = new HashMap<EBMLCode, EBMLCode>();
+
+    private static final char[] hexCode = "0123456789ABCDEF".toCharArray();
+
+    public static final String printHex(byte[] data) {
+        StringBuilder r = new StringBuilder(data.length * 2);
+        for (byte b : data) {
+            r.append(hexCode[(b >> 4) & 0xF]);
+            r.append(hexCode[(b & 0xF)]);
+        }
+        return r.toString();
+    }
 
     private static synchronized EBMLCode intern(EBMLCode extCode) {
         EBMLCode intCode = internalCache.get(extCode);
@@ -44,7 +53,7 @@ public final class EBMLCode {
 
     public EBMLCode(byte[] code) {
         if (!EBMLFormatUtil.isCodeValid(code)) {
-            throw new IllegalArgumentException("EBMLCode [" + DatatypeConverter.printHexBinary(code) + "] is not a valid EBML coded data");
+            throw new IllegalArgumentException("EBMLCode [" + printHex(code) + "] is not a valid EBML coded data");
         }
         this.code = code;
     }
@@ -87,11 +96,10 @@ public final class EBMLCode {
 
     @Override
     public String toString() {
-        return "EBMLCode [" + DatatypeConverter.printHexBinary(this.code) + "]";
+        return "EBMLCode [" + printHex(this.code) + "]";
     }
 
     public String toHexString() {
-        return DatatypeConverter.printHexBinary(this.code);
+        return printHex(this.code);
     }
-
 }
